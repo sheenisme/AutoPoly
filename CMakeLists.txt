@@ -159,6 +159,36 @@ message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 # Set PPCG directory (always required and built from source)
 set(PPCG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ppcg)
 
+# Determine compiler characteristics
+# (These are referenced from Polly project configuration)
+include(CheckCSourceCompiles)
+
+# Like check_c_source_compiles, but sets the result to either
+# 0 (error while compiling) or 1 (compiled successfully)
+# Required for compatibility with autotool's AC_CHECK_DECLS
+function (check_c_source_compiles_numeric _prog _var)
+    check_c_source_compiles("${_prog}" "${_var}")
+    if ("${${_var}}")
+        set("${_var}" 1 PARENT_SCOPE)
+    else()
+        set("${_var}" 0 PARENT_SCOPE)
+    endif ()
+endfunction ()
+
+# Check for the existance of a type
+function (check_c_type_exists _type _files _variable)
+    set(_includes "")
+    foreach (file_name ${_files})
+        set(_includes "${_includes}#include<${file_name}>\n")
+    endforeach()
+    check_c_source_compiles("
+    ${_includes}
+    ${_type} typeVar;
+    int main(void) {
+    return 0;
+    }
+    " ${_variable})
+endfunction ()
 
 # ============================================================================
 # ISL Library Configuration
@@ -169,38 +199,11 @@ set(PPCG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ppcg)
 if(BUILD_ISL)
     set(ISL_DIR ${PPCG_DIR}/isl)
     message(STATUS "Using ISL from source at: ${ISL_DIR}")
-    
-    # Determine compiler characteristics
-    # (These are referenced from Polly project configuration)
-    include(CheckCSourceCompiles)
 
-    # Like check_c_source_compiles, but sets the result to either
-    # 0 (error while compiling) or 1 (compiled successfully)
-    # Required for compatibility with autotool's AC_CHECK_DECLS
-    function (check_c_source_compiles_numeric _prog _var)
-        check_c_source_compiles("${_prog}" "${_var}")
-        if ("${${_var}}")
-            set("${_var}" 1 PARENT_SCOPE)
-        else()
-            set("${_var}" 0 PARENT_SCOPE)
-        endif ()
-    endfunction ()
-
-    # Check for the existance of a type
-    function (check_c_type_exists _type _files _variable)
-        set(_includes "")
-        foreach (file_name ${_files})
-            set(_includes "${_includes}#include<${file_name}>\n")
-        endforeach()
-        check_c_source_compiles("
-        ${_includes}
-        ${_type} typeVar;
-        int main(void) {
-        return 0;
-        }
-        " ${_variable})
-    endfunction ()
-
+    ########################################################################
+    #    Check compiler characteristics to set ISL compilation options     #
+    #    (Referenced from Polly project configuration)                     #
+    ########################################################################
     check_c_source_compiles("
     int func(void) __attribute__((__warn_unused_result__));
     int main(void) { return 0; }
@@ -277,17 +280,7 @@ if(BUILD_ISL)
         message(FATAL_ERROR "No snprintf implementation found")
     endif ()
 
-    # Create gitversion.h file (required by ISL)
-    execute_process(
-        COMMAND git describe --always 
-        WORKING_DIRECTORY ${ISL_DIR}
-        OUTPUT_VARIABLE ISL_GIT_HEAD_VERSION
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-    file(WRITE ${CMAKE_BINARY_DIR}/include/isl/gitversion.h "#define GIT_HEAD_ID \"${ISL_GIT_HEAD_VERSION}\"")
-    message(STATUS "ISL version: ${ISL_GIT_HEAD_VERSION}")
-
-    # # Create stdint.h file (Referenced from Polly project configuration)
+    # Create stdint.h file (Referenced from Polly project configuration)
     check_c_type_exists(uint8_t "" HAVE_UINT8T)
     check_c_type_exists(uint8_t "stdint.h" HAVE_STDINT_H)
     check_c_type_exists(uint8_t "inttypes.h" HAVE_INTTYPES_H)
@@ -311,6 +304,16 @@ if(BUILD_ISL)
     # Create ISL configuration header file
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/isl_config.h.cmake" "${CMAKE_BINARY_DIR}/include/isl_config.h")
     include_directories(${CMAKE_BINARY_DIR}/include)
+
+    # Create gitversion.h file (required by ISL)
+    execute_process(
+        COMMAND git describe --always 
+        WORKING_DIRECTORY ${ISL_DIR}
+        OUTPUT_VARIABLE ISL_GIT_HEAD_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    file(WRITE ${CMAKE_BINARY_DIR}/include/isl/gitversion.h "#define GIT_HEAD_ID \"${ISL_GIT_HEAD_VERSION}\"")
+    message(STATUS "ISL version: ${ISL_GIT_HEAD_VERSION}")
 
     # Include ISL headers
     include_directories(isl PRIVATE
@@ -474,6 +477,12 @@ if(BUILD_PET)
     set(PET_DIR ${PPCG_DIR}/pet)
     message(STATUS "Using PET from source at: ${PET_DIR}")
 
+    ########################################################################
+    # TODO: Check compiler characteristics to set ISL compilation options  #
+    ########################################################################
+    # Create PET configuration header file (This is a temporary solution)
+    file(WRITE ${CMAKE_BINARY_DIR}/include/pet/config.h "\n/* Configuration file defining macros needed by the PET library */\n#define DiagnosticInfo Diagnostic\n#define HandleTopLevelDeclReturn bool\n#define HandleTopLevelDeclContinue true\n#define CREATETARGETINFO_TAKES_SHARED_PTR 1\n#define SETINVOCATION_TAKES_SHARED_PTR\n#define ADDPATH_TAKES_4_ARGUMENTS\n#define ext_implicit_function_decl_c99 ext_implicit_function_decl\n#define HAVE_TRANSLATELINECOL 1\n#define HAVE_DECL_FFS 1\n#define HAVE_DECL_STRCASECMP 1\n#define HAVE_DECL_STRNCASECMP 1\n#define HAVE_GETRUSAGE 1\n#define HAVE_GETTIMEOFDAY 1\n#define HAVE_SSIZE_T 1\n#define PACKAGE \"pet\"\n#define PACKAGE_BUGREPORT \"\"\n#define PACKAGE_NAME \"pet\"\n#define PACKAGE_STRING \"pet 0.11\"\n#define PACKAGE_TARNAME \"pet\"\n#define PACKAGE_URL \"\"\n#define PACKAGE_VERSION \"0.11\"\n#define VERSION \"0.11\"\n#define NO_CLANG 1\n#define HAVE_STDINT_H 1\n#define USE_NESTED_ARRAY_SIZE_MODIFIER 1\n#define USE_GET_BEGIN_END_LOC 1\n#define getFileLocWithOffset getLocWithOffset\n#define GETTYPEINFORETURNSTYPEINFO 1\n#define HAVE_BASIC_DIAGNOSTICOPTIONS_H 1\n#define HAVE_LEX_HEADERSEARCHOPTIONS_H 1\n#define HAVE_CLANG_BASIC_LANGSTANDARD_H 1\n#define HAVE_LEX_PREPROCESSOROPTIONS_H 1\n#define HAVE_LLVM_OPTION_ARG_H 1\n#define CREATEPREPROCESSOR_TAKES_TUKIND 1\n#define HAVE_SETMAINFILEID 1\n#define SETLANGDEFAULTS_TAKES_5_ARGUMENTS 1\n#define SETLANGDEFAULTS CompilerInvocation\n#define IK_C Language::C\n#define HAVE_BEGIN_END_LOC 1\n")
+
     # Create gitversion.h file (required by PET)
     execute_process(
         COMMAND git describe --always 
@@ -519,9 +528,6 @@ endif()
 if(BUILD_PET)
     # Build PET from source
     message(STATUS "Configuring PET library build from source")
-
-    # Create PET configuration header file
-    file(WRITE ${CMAKE_BINARY_DIR}/include/pet/config.h "\n/* Configuration file defining macros needed by the PET library */\n#define DiagnosticInfo Diagnostic\n#define HandleTopLevelDeclReturn bool\n#define HandleTopLevelDeclContinue true\n#define CREATETARGETINFO_TAKES_SHARED_PTR 1\n#define SETINVOCATION_TAKES_SHARED_PTR\n#define ADDPATH_TAKES_4_ARGUMENTS\n#define ext_implicit_function_decl_c99 ext_implicit_function_decl\n#define HAVE_TRANSLATELINECOL 1\n#define HAVE_DECL_FFS 1\n#define HAVE_DECL_STRCASECMP 1\n#define HAVE_DECL_STRNCASECMP 1\n#define HAVE_GETRUSAGE 1\n#define HAVE_GETTIMEOFDAY 1\n#define HAVE_SSIZE_T 1\n#define PACKAGE \"pet\"\n#define PACKAGE_BUGREPORT \"\"\n#define PACKAGE_NAME \"pet\"\n#define PACKAGE_STRING \"pet 0.11\"\n#define PACKAGE_TARNAME \"pet\"\n#define PACKAGE_URL \"\"\n#define PACKAGE_VERSION \"0.11\"\n#define VERSION \"0.11\"\n#define NO_CLANG 1\n#define HAVE_STDINT_H 1\n#define USE_NESTED_ARRAY_SIZE_MODIFIER 1\n#define USE_GET_BEGIN_END_LOC 1\n#define getFileLocWithOffset getLocWithOffset\n#define GETTYPEINFORETURNSTYPEINFO 1\n#define HAVE_BASIC_DIAGNOSTICOPTIONS_H 1\n#define HAVE_LEX_HEADERSEARCHOPTIONS_H 1\n#define HAVE_CLANG_BASIC_LANGSTANDARD_H 1\n#define HAVE_LEX_PREPROCESSOROPTIONS_H 1\n#define HAVE_LLVM_OPTION_ARG_H 1\n#define CREATEPREPROCESSOR_TAKES_TUKIND 1\n#define HAVE_SETMAINFILEID 1\n#define SETLANGDEFAULTS_TAKES_5_ARGUMENTS 1\n#define SETLANGDEFAULTS CompilerInvocation\n#define IK_C Language::C\n#define HAVE_BEGIN_END_LOC 1\n")
 
     # Complete PET source file list (according to Makefile.am)
     set(PET_SOURCES
