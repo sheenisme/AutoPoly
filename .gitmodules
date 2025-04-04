@@ -1,0 +1,3 @@
+[submodule "ppcg"]
+	path = ppcg
+	url = git://repo.or.cz/ppcg.git
