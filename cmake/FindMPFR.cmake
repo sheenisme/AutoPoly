@@ -1,14 +1,14 @@
 # FindMPFR.cmake
-# 查找MPFR库
-# 定义:
-#  MPFR_FOUND - 找到了MPFR库
-#  MPFR_INCLUDE_DIRS - MPFR头文件目录
-#  MPFR_LIBRARIES - MPFR库
+# Find MPFR library
+# Defines:
+#  MPFR_FOUND - Found MPFR library
+#  MPFR_INCLUDE_DIRS - MPFR header file directories
+#  MPFR_LIBRARIES - MPFR libraries
 
-# 包括有用的查找功能
+# Include useful find functions
 include(FindPackageHandleStandardArgs)
 
-# 查找库
+# Find the library
 find_library(MPFR_LIBRARIES
   NAMES mpfr libmpfr
   PATHS
@@ -21,7 +21,7 @@ find_library(MPFR_LIBRARIES
   PATH_SUFFIXES lib lib64
 )
 
-# 查找头文件
+# Find the include directory
 find_path(MPFR_INCLUDE_DIRS
   NAMES mpfr.h
   PATHS
@@ -34,10 +34,10 @@ find_path(MPFR_INCLUDE_DIRS
   PATH_SUFFIXES include
 )
 
-# 处理变量参数
+# Handle the REQUIRED argument and set the *_FOUND variable
 find_package_handle_standard_args(MPFR
   REQUIRED_VARS MPFR_LIBRARIES MPFR_INCLUDE_DIRS
 )
 
-# 设置缓存条目
+# Mark as advanced
 mark_as_advanced(MPFR_INCLUDE_DIRS MPFR_LIBRARIES) 

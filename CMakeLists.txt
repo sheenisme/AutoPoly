@@ -1,6 +1,6 @@
 include(CheckCSourceCompiles)
 
-# 类似check_c_source_compiles，但设置结果为0或1
+# Similar to check_c_source_compiles, but sets the result to 0 or 1
 function(check_c_source_compiles_numeric _prog _var)
   check_c_source_compiles("${_prog}" "${_var}_RESULT")
   if(${_var}_RESULT)
@@ -10,24 +10,21 @@ function(check_c_source_compiles_numeric _prog _var)
   endif()
 endfunction()
 
-# 在CMake文件开头添加以下内容，强制使用系统GCC
+# Force using system GCC at the beginning of CMake file
 set(CMAKE_C_COMPILER "/usr/bin/gcc")
 set(CMAKE_CXX_COMPILER "/usr/bin/g++")
 
-# 获取编译器信息，包括默认include路径
+# Get compiler information, including default include paths
 execute_process(
     COMMAND ${CMAKE_CXX_COMPILER} -E -x c++ -v /dev/null
     ERROR_VARIABLE compiler_info
     OUTPUT_QUIET
 )
 
-# 解析输出以获取include路径 - 修复路径过滤
+# Parse output to get include paths - fix path filtering
 string(REGEX MATCHALL "/usr/include[^\n]+|/usr/lib[^\n]+" include_paths "${compiler_info}")
 
-# 修复__has_feature宏函数定义
-add_compile_options(-D"__has_feature(x)=0")
-
-# 单独设置CLANG_PREFIX宏
+# Set CLANG_PREFIX macro separately
 execute_process(
     COMMAND ${LLVM_CONFIG} --prefix
     OUTPUT_VARIABLE CLANG_PREFIX
@@ -39,36 +36,41 @@ add_compile_definitions(CLANG_PREFIX="${CLANG_PREFIX}")
 cmake_minimum_required(VERSION 3.10)
 project(AutoStash LANGUAGES C CXX)
 
-# 设置C/C++标准
+# Set C/C++ standards
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
-# 编译选项
+# Set output directories for binaries and libraries
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# Compilation options
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(USE_OPENMP "Enable OpenMP support" ON)
 option(USE_OPENCL "Enable OpenCL support" OFF)
 
-# 设置查找模块路径
+# Set module search path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-# 查找必要的库
-# GMP和MPFR库的检测
+# Find required libraries
+# Detect GMP and MPFR libraries
 find_package(GMP REQUIRED)
 find_package(MPFR REQUIRED)
 
-# 在查找GMP之后添加LLVM/Clang检测
+# Add LLVM/Clang detection after finding GMP
 find_package(LLVM REQUIRED CONFIG)
 find_package(Clang REQUIRED CONFIG)
 
-# 获取LLVM/Clang包含路径和库
+# Get LLVM/Clang include paths and libraries
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "LLVM include目录: ${LLVM_INCLUDE_DIRS}")
-message(STATUS "Clang库: ${CLANG_LIBRARIES}")
+message(STATUS "LLVM include directories: ${LLVM_INCLUDE_DIRS}")
+message(STATUS "Clang libraries: ${CLANG_LIBRARIES}")
 
-# 设置Clang编译选项 - 修复定义方式
+# Set Clang compilation options - fix definition method
 set(CLANG_CXXFLAGS "-fno-rtti -fPIC")
 
-# 添加系统标准库路径，仅包含有效的目录
+# Add system standard library paths, only include valid directories
 foreach(path ${include_paths})
     if(IS_DIRECTORY "${path}")
         include_directories(SYSTEM "${path}")
@@ -76,14 +78,14 @@ foreach(path ${include_paths})
     endif()
 endforeach()
 
-# 添加GMP和MPFR头文件目录
+# Add GMP and MPFR header directories
 include_directories(${GMP_INCLUDE_DIRS} ${MPFR_INCLUDE_DIRS})
 include_directories(${CMAKE_CXX_STANDARD_INCLUDE_DIRS})
 
-# 确保包含标准C++头文件路径
+# Ensure standard C++ header file paths are included
 include_directories(SYSTEM ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 
-# OpenMP和OpenCL的检测
+# Detection of OpenMP and OpenCL
 if(USE_OPENMP)
     find_package(OpenMP)
 endif()
@@ -91,12 +93,12 @@ if(USE_OPENCL)
     find_package(OpenCL)
 endif()
 
-# 设置第三方库路径
+# Set third-party library paths
 set(PPCG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ppcg)
 set(ISL_DIR ${PPCG_DIR}/isl)
 set(PET_DIR ${PPCG_DIR}/pet)
 
-# 创建gitversion.h文件（PPCG需要）
+# Create gitversion.h file (required by PPCG)
 execute_process(
     COMMAND git describe --always 
     WORKING_DIRECTORY ${PPCG_DIR}
@@ -105,21 +107,21 @@ execute_process(
 )
 file(WRITE ${PPCG_DIR}/gitversion.h "#define GIT_HEAD_ID \"${GIT_HEAD_VERSION}\"")
 
-# 创建ISL配置头文件
-# 创建编译时需要的目录
+# Create ISL configuration header file
+# Create directories needed for compilation
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/include/isl)
 
-# 创建isl_config.h文件
+# Create isl_config.h file
 file(WRITE ${CMAKE_BINARY_DIR}/include/isl_config.h "
-/* 配置文件，定义了ISL库需要的宏 */
-/* 检查编译器是否支持 warn_unused_result 属性 */
+/* Configuration file defining macros needed by the ISL library */
+/* Check if compiler supports warn_unused_result attribute */
 #if defined(__GNUC__) && __GNUC__ >= 3
 #define WARN_UNUSED __attribute__((__warn_unused_result__))
 #else
 #define WARN_UNUSED
 #endif
 
-/* isl库的属性定义 */
+/* ISL library attribute definitions */
 #define __isl_give
 #define __isl_take
 #define __isl_keep
@@ -129,7 +131,7 @@ file(WRITE ${CMAKE_BINARY_DIR}/include/isl_config.h "
 #define __isl_only
 #define __isl_consumed
 
-/* 其他ISL库配置 */
+/* Other ISL library configurations */
 #define USE_GMP_FOR_MP 1
 #define GMP_FOR_MP 1
 #define HAVE_DECL_FFS 1
@@ -137,7 +139,7 @@ file(WRITE ${CMAKE_BINARY_DIR}/include/isl_config.h "
 #define HAVE_DECL_STRNCASECMP 1
 #define HAVE_DECL_SNPRINTF 1
 
-/* 标准头文件检查 */
+/* Standard header file checks */
 #define HAVE_STDINT_H 1
 #define HAVE_STDLIB_H 1
 #define HAVE_STRING_H 1
@@ -145,14 +147,14 @@ file(WRITE ${CMAKE_BINARY_DIR}/include/isl_config.h "
 #define HAVE_INTTYPES_H 1
 ")
 
-# 创建stdint.h文件
+# Create stdint.h file
 file(WRITE ${CMAKE_BINARY_DIR}/include/isl/stdint.h "#include <stdint.h>")
 
-# 包含编译时生成的头文件目录
+# Include directories for generated header files
 include_directories(${CMAKE_BINARY_DIR}/include)
 include_directories(${CMAKE_CXX_STANDARD_INCLUDE_DIRS}) 
 
-# 为ISL和PET库定义编译选项
+# Define compilation options for ISL and PET libraries
 add_definitions(
     -D_GNU_SOURCE
     -DHAVE_CONFIG_H
@@ -161,14 +163,14 @@ add_definitions(
     -D__STDC_LIMIT_MACROS
 )
 
-# 构建ISL库
+# Build ISL library
 include_directories(
     ${ISL_DIR}/include
     ${ISL_DIR}
     ${ISL_DIR}/imath
 )
 
-# ISL库源文件 - 基于Polly项目的配置
+# ISL library source files - based on Polly project configuration
 set(ISL_SOURCES
     ${ISL_DIR}/isl_aff.c
     ${ISL_DIR}/isl_aff_map.c
@@ -249,10 +251,10 @@ set(ISL_SOURCES
     ${ISL_DIR}/isl_vec.c
     ${ISL_DIR}/isl_version.c
     ${ISL_DIR}/isl_vertices.c
-    # GMP相关文件
+    # GMP related files
     ${ISL_DIR}/isl_gmp.c
     ${ISL_DIR}/isl_val_gmp.c
-    # 模板实现的C文件
+    # Template implemented C files
     ${ISL_DIR}/set_to_map.c
     ${ISL_DIR}/set_from_map.c
     ${ISL_DIR}/uset_to_umap.c
@@ -269,10 +271,10 @@ target_compile_definitions(isl PRIVATE
     __STDC_LIMIT_MACROS
 )
 
-# 尝试为ISL添加调试选项，以便更好地诊断错误
+# Add debug options to ISL for better error diagnosis
 target_compile_options(isl PRIVATE -g)
 
-# 构建PET库 - 根据Makefile.am明确列出需要的源文件
+# Build PET library - explicitly list required source files according to Makefile.am
 include_directories(
     ${PET_DIR}/include
     ${ISL_DIR}/include
@@ -282,20 +284,20 @@ include_directories(
     ${CMAKE_BINARY_DIR}/include/compat
 )
 
-# 确保C++标准库路径正确包含
+# Ensure C++ standard library paths are correctly included
 include_directories(SYSTEM ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
 
-# 完整PET源文件列表（根据Makefile.am）
+# Complete PET source file list (according to Makefile.am)
 set(PET_SOURCES
     ${PET_DIR}/aff.c
     ${PET_DIR}/array.c
-    ${PET_DIR}/clang.cc       # 新增Clang相关源文件
+    ${PET_DIR}/clang.cc
     ${PET_DIR}/context.c
     ${PET_DIR}/expr.c
     ${PET_DIR}/expr_arg.c
-    ${PET_DIR}/expr_plus.cc   # C++源文件
+    ${PET_DIR}/expr_plus.cc
     ${PET_DIR}/filter.c
-    ${PET_DIR}/id.cc          # 必须保留的C++源文件
+    ${PET_DIR}/id.cc
     ${PET_DIR}/isl_id_to_pet_expr.c
     ${PET_DIR}/inlined_calls.cc
     ${PET_DIR}/inliner.cc
@@ -319,22 +321,7 @@ set(PET_SOURCES
     ${PET_DIR}/pet.cc
 )
 
-# 设置C++源文件编译选项 - 修复源文件属性设置方式
-set(CPP_SOURCE_FILES
-    ${PET_DIR}/clang.cc
-    ${PET_DIR}/expr_plus.cc
-    ${PET_DIR}/id.cc
-    ${PET_DIR}/inlined_calls.cc
-    ${PET_DIR}/inliner.cc
-    ${PET_DIR}/killed_locals.cc
-    ${PET_DIR}/scan.cc
-    ${PET_DIR}/scop_plus.cc
-    ${PET_DIR}/substituter.cc
-    ${PET_DIR}/version.cc
-    ${PET_DIR}/pet.cc
-)
-
-# 添加Clang依赖库
+# Add Clang dependency libraries
 set(CLANG_REQUIRED_LIBS
     clangAST
     clangBasic
@@ -349,7 +336,7 @@ set(CLANG_REQUIRED_LIBS
     clangASTMatchers
 )
 
-# 构建pet库
+# Build pet library
 add_library(pet ${PET_SOURCES})
 target_link_libraries(pet 
     isl 
@@ -371,10 +358,10 @@ target_include_directories(pet PRIVATE
     ${CLANG_INCLUDE_DIRS}
 )
 
-# 创建PET配置头文件
+# Create PET configuration header file
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/include/pet)
 file(WRITE ${CMAKE_BINARY_DIR}/include/pet/config.h "
-/* 配置文件，定义了PET库需要的宏 */
+/* Configuration file defining macros needed by the PET library */
 #define DiagnosticInfo Diagnostic
 #define HandleTopLevelDeclReturn bool
 #define HandleTopLevelDeclContinue true
@@ -416,7 +403,7 @@ file(WRITE ${CMAKE_BINARY_DIR}/include/pet/config.h "
 #define HAVE_BEGIN_END_LOC 1
 ")
 
-# 构建PPCG
+# Build PPCG
 include_directories(
     ${PPCG_DIR}
     ${ISL_DIR}/include
@@ -438,12 +425,12 @@ set(PPCG_SOURCES
     ${PPCG_DIR}/hybrid.c
     ${PPCG_DIR}/schedule.c
     ${PPCG_DIR}/ppcg_options.c
-    # 从库中移除ppcg.c，避免main函数冲突
-    # ${PPCG_DIR}/ppcg.c
     ${PPCG_DIR}/print.c
     ${PPCG_DIR}/util.c
     ${PPCG_DIR}/version.c
-    # 添加包含ppcg_options_new_with_defaults实现的文件
+    # Remove ppcg.c from the library to avoid main function conflict
+    # ${PPCG_DIR}/ppcg.c
+    # Add ppcg_wrapper.c file containing ppcg_main implementation
     ${CMAKE_CURRENT_SOURCE_DIR}/ppcg_wrapper.c
 )
 
@@ -460,7 +447,7 @@ target_compile_definitions(ppcg PRIVATE
     HAVE_CONFIG_H
 )
 
-# 构建PPCG可执行文件
+# Build PPCG executable
 add_executable(ppcg_exe ${PPCG_DIR}/ppcg.c)
 set_target_properties(ppcg_exe PROPERTIES OUTPUT_NAME "ppcg")
 target_link_libraries(ppcg_exe ppcg pet isl ${GMP_LIBRARIES} ${MPFR_LIBRARIES})
@@ -471,11 +458,11 @@ if(OpenCL_FOUND)
     target_link_libraries(ppcg_exe OpenCL::OpenCL)
 endif()
 
-# 你的主应用程序
+# Your main application
 add_executable(AutoStash main.cpp)
 target_link_libraries(AutoStash ppcg pet isl)
 
-# 导出包含目录，使其他项目可以使用这些库
+# Export include directories so other projects can use these libraries
 set(AutoStash_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${PPCG_DIR}
@@ -484,7 +471,7 @@ set(AutoStash_INCLUDE_DIRS
     CACHE INTERNAL "AutoStash include directories"
 )
 
-# 安装规则
+# Installation rules
 install(TARGETS ppcg pet isl
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
@@ -504,7 +491,7 @@ install(DIRECTORY
     DESTINATION include/pet
 )
 
-# 检查编译器特性
+# Check compiler features
 check_c_source_compiles("
 int func(void) __attribute__((__warn_unused_result__));
 int main(void) { return 0; }
@@ -521,7 +508,7 @@ __attribute__ ((unused)) static void foo(void);
 int main(void) { return 0; }
 " HAVE___ATTRIBUTE__)
 
-# 检查ffs等函数
+# Check ffs and other functions
 check_c_source_compiles_numeric("
 #include <strings.h>
 int main(void) { (void)ffs(0); return 0; }
@@ -536,28 +523,28 @@ check_c_source_compiles_numeric("
 int main(void) { (void)_BitScanForward(NULL, 0); return 0; }
 " HAVE_DECL__BITSCANFORWARD)
 
-# 创建Clang兼容性头文件
+# Create Clang compatibility header file
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/include/compat)
 file(WRITE ${CMAKE_BINARY_DIR}/include/compat/clang_compat.h "
 #ifndef CLANG_COMPAT_H
 #define CLANG_COMPAT_H
 
-// 定义__has_feature作为宏函数
+// Define __has_feature as a macro function
 #ifndef __has_feature
 #define __has_feature(x) 0
 #endif
 
 #define getFileLocWithOffset getLocWithOffset
 
-// 兼容新版本Clang中已更改的API
+// Compatible with API changes in newer Clang versions
 #include <clang/Basic/SourceManager.h>
 namespace clang {
-  // 兼容旧版的getLocation
+  // Compatible with old version of getLocation
   inline SourceLocation getLocation(SourceManager &SM, FileID FID, unsigned int line, unsigned int col) {
     return SM.translateLineCol(FID, line, col);
   }
   
-  // 添加到SourceManager类
+  // Add to SourceManager class
   class SourceManagerEx : public SourceManager {
   public:
     void createMainFileID(const FileEntry *FileEntry) {
@@ -566,7 +553,7 @@ namespace clang {
   };
 }
 
-// 扩展SourceManager类的createMainFileID方法
+// Extend the createMainFileID method of SourceManager class
 namespace clang {
   inline void createMainFileID(SourceManager &SM, const FileEntry *file) {
     SM.setMainFileID(SM.createFileID(file, SourceLocation(), SrcMgr::C_User));
@@ -576,18 +563,18 @@ namespace clang {
 #endif // CLANG_COMPAT_H
 ")
 
-# A4标准LLVM类型映射
+# A4 standard LLVM type mapping
 file(WRITE ${CMAKE_BINARY_DIR}/include/compat/llvm_compat.h "
 #ifndef LLVM_COMPAT_H
 #define LLVM_COMPAT_H
 
 #ifdef GETTYPEINFORETURNSTYPEINFO
-// 新版LLVM的TypeInfo返回值是一个结构体
+// New version of LLVM returns TypeInfo as a struct
 #else
-// 旧版LLVM的TypeInfo返回值是一个pair
+// Old version of LLVM returns TypeInfo as a pair
 namespace clang {
   struct TypeInfo {
-    // 模拟旧版本的first成员
+    // Simulate the first member of the old version
     unsigned Width;
   };
 }
@@ -596,7 +583,7 @@ namespace clang {
 #endif // LLVM_COMPAT_H
 ")
 
-# 在编译前创建一个自定义的预处理文件
+# Create a custom preprocessing file before compilation
 file(WRITE ${CMAKE_BINARY_DIR}/include/pet/custom_stddef.h "
 #ifndef _CUSTOM_STDDEF_H
 #define _CUSTOM_STDDEF_H
@@ -607,15 +594,15 @@ file(WRITE ${CMAKE_BINARY_DIR}/include/pet/custom_stddef.h "
 #endif
 ")
 
-# 添加到包含路径
+# Add to include paths
 include_directories(BEFORE ${CMAKE_BINARY_DIR}/include)
 include_directories(BEFORE ${CMAKE_BINARY_DIR}/include/compat)
 
-# 添加Clang目录
+# Add Clang directories
 find_package(LLVM REQUIRED CONFIG)
 include_directories(${LLVM_INCLUDE_DIRS})
 find_package(Clang REQUIRED CONFIG)
 include_directories(${CLANG_INCLUDE_DIRS})
 
-# 然后在pet库目标中添加链接依赖
+# Then add link dependencies to pet library target
 target_link_libraries(pet isl ${GMP_LIBRARIES} clangAST clangBasic)

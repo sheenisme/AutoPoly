@@ -2,7 +2,7 @@
 #include <string>
 #include <cstdio>
 
-// 包含PPCG头文件
+// add ppcg wrapper
 extern "C" {
 #include "ppcg.h"
 #include "ppcg_options.h"
