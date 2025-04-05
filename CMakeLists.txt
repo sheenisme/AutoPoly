@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
 project(AutoStash LANGUAGES C CXX)
 
+# Set C/C++ standards
+set(CMAKE_C_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17)
+
 # Force using system GCC at the beginning of CMake file
 # TODO: Remove this once we have a proper way to detect the compiler like m4 in isl.
 message(STATUS "Only Support the system GCC")
@@ -26,11 +30,26 @@ foreach(path ${include_paths})
     endif()
 endforeach()
 
-# Set C/C++ standards
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
+# # Configure compiler by clang and clang++
+# set(CMAKE_C_COMPILER clang CACHE STRING "C compiler" FORCE)
+# set(CMAKE_CXX_COMPILER clang++ CACHE STRING "C++ compiler" FORCE)
+# message(STATUS "C compiler location: ${CMAKE_C_COMPILER}")
+# message(STATUS "C++ compiler location: ${CMAKE_CXX_COMPILER}")
 
+# Show compiler search path
+execute_process(
+    COMMAND ${CMAKE_CXX_COMPILER} -print-search-dirs
+    OUTPUT_VARIABLE SEARCH_DIRS
+)
+message(STATUS "Compiler search path:\n${SEARCH_DIRS}")
 
+# Get CXX stdlib path
+execute_process(
+    COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libstdc++.so
+    OUTPUT_VARIABLE C_PLUS_STD_LIB_PATH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+message(STATUS "C++ library location: ${C_PLUS_STD_LIB_PATH}")
 
 # ============================================================================
 # Compilation options (default: ON)
@@ -130,17 +149,6 @@ if(Clang_FOUND)
 else()
     message(STATUS "Clang not found")
 endif()
-# Set CLANG_PREFIX macro separately
-execute_process(
-    COMMAND ${LLVM_CONFIG} --prefix
-    OUTPUT_VARIABLE CLANG_PREFIX
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-add_compile_definitions(CLANG_PREFIX="${CLANG_PREFIX}")
-
-
-# Set Clang compilation options
-set(CLANG_CXXFLAGS "-fno-rtti -fPIC")
 
 # Set default build type to Debug
 if(NOT CMAKE_BUILD_TYPE)
@@ -186,6 +194,14 @@ include(CheckSymbolExists)
 # Required for compatibility with autotool's AC_CHECK_DECLS
 function (check_c_source_compiles_numeric _prog _var)
     check_c_source_compiles("${_prog}" "${_var}")
+    if ("${${_var}}")
+        set("${_var}" 1 PARENT_SCOPE)
+    else()
+        set("${_var}" 0 PARENT_SCOPE)
+    endif ()
+endfunction ()
+function (check_cxx_source_compiles_numeric _prog _var)
+    check_cxx_source_compiles("${_prog}" "${_var}")
     if ("${${_var}}")
         set("${_var}" 1 PARENT_SCOPE)
     else()
@@ -654,21 +670,29 @@ if(BUILD_PET)
     if(NOT HAVE_GETLOCWITHOFFSET)
         set(getFileLocWithOffset "getLocWithOffset")
     endif()
+
+    # # Check if getTypeInfo returns TypeInfo object
+    # check_c_source_compiles(
+    #     "#include <clang/AST/ASTContext.h>\nint main() { clang::ASTContext C(clang::LangOptions(), nullptr); clang::TypeInfo TI = C.getTypeInfo(nullptr); return 0; }" 
+    #     GETTYPEINFORETURNSTYPEINFO_CHECK)
+    # if(GETTYPEINFORETURNSTYPEINFO_CHECK)
+    #     set(GETTYPEINFORETURNSTYPEINFO 1)
+    # endif()
     
-    # Check if getTypeInfo returns TypeInfo object
-    check_c_source_compiles(
-        "#include <clang/AST/ASTContext.h>\nint main() { clang::ASTContext C(clang::LangOptions(), nullptr); clang::TypeInfo TI = C.getTypeInfo(nullptr); return 0; }" 
-        GETTYPEINFORETURNSTYPEINFO_CHECK)
-    if(GETTYPEINFORETURNSTYPEINFO_CHECK)
-        set(GETTYPEINFORETURNSTYPEINFO 1)
-    endif()
-    
+    # Check for getTypeInfo return type
+    check_cxx_source_compiles_numeric("
+    #include <clang/AST/ASTContext.h>
+    int main(void) { clang::ASTContext.getTypeInfo(0).Width; return 0; }"
+        GETTYPEINFORETURNSTYPEINFO
+    )
+
     # Check for various header files
     check_include_file_cxx("clang/Basic/DiagnosticOptions.h" HAVE_BASIC_DIAGNOSTICOPTIONS_H)
     check_include_file_cxx("clang/Lex/HeaderSearchOptions.h" HAVE_LEX_HEADERSEARCHOPTIONS_H)
     check_include_file_cxx("clang/Basic/LangStandard.h" HAVE_CLANG_BASIC_LANGSTANDARD_H)
     check_include_file_cxx("clang/Lex/PreprocessorOptions.h" HAVE_LEX_PREPROCESSOROPTIONS_H)
     check_include_file_cxx("llvm/Option/Arg.h" HAVE_LLVM_OPTION_ARG_H)
+    check_include_file_cxx("llvm/TargetParser/Host.h" HAVE_TARGETPARSER_HOST_H)
 
     # Check if createPreprocessor takes TranslationUnitKind
     check_c_source_compiles(
@@ -726,8 +750,9 @@ if(BUILD_PET)
 
     # Create PET configuration header file using the hard codes.
     #   (TODO: this need by replace by auto_config.h)
+    # configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/pet_config.h" "${CMAKE_BINARY_DIR}/include/pet/config.h")
     file(WRITE ${CMAKE_BINARY_DIR}/include/pet/config.h "\n/* Configuration file defining macros needed by the PET library */\n#define DiagnosticInfo Diagnostic\n#define HandleTopLevelDeclReturn bool\n#define HandleTopLevelDeclContinue true\n#define CREATETARGETINFO_TAKES_SHARED_PTR 1\n#define SETINVOCATION_TAKES_SHARED_PTR\n#define ADDPATH_TAKES_4_ARGUMENTS\n#define ext_implicit_function_decl_c99 ext_implicit_function_decl\n#define HAVE_TRANSLATELINECOL 1\n#define HAVE_DECL_FFS 1\n#define HAVE_DECL_STRCASECMP 1\n#define HAVE_DECL_STRNCASECMP 1\n#define HAVE_GETRUSAGE 1\n#define HAVE_GETTIMEOFDAY 1\n#define HAVE_SSIZE_T 1\n#define PACKAGE \"pet\"\n#define PACKAGE_BUGREPORT \"\"\n#define PACKAGE_NAME \"pet\"\n#define PACKAGE_STRING \"pet 0.11\"\n#define PACKAGE_TARNAME \"pet\"\n#define PACKAGE_URL \"\"\n#define PACKAGE_VERSION \"0.11\"\n#define VERSION \"0.11\"\n#define HAVE_STDINT_H 1\n#define USE_NESTED_ARRAY_SIZE_MODIFIER 1\n#define USE_GET_BEGIN_END_LOC 1\n#define getFileLocWithOffset getLocWithOffset\n#define GETTYPEINFORETURNSTYPEINFO 1\n#define HAVE_BASIC_DIAGNOSTICOPTIONS_H 1\n#define HAVE_LEX_HEADERSEARCHOPTIONS_H 1\n#define HAVE_CLANG_BASIC_LANGSTANDARD_H 1\n#define HAVE_LEX_PREPROCESSOROPTIONS_H 1\n#define HAVE_LLVM_OPTION_ARG_H 1\n#define CREATEPREPROCESSOR_TAKES_TUKIND 1\n#define HAVE_SETMAINFILEID 1\n#define SETLANGDEFAULTS_TAKES_5_ARGUMENTS 1\n#define SETLANGDEFAULTS CompilerInvocation\n#define IK_C Language::C\n#define HAVE_BEGIN_END_LOC 1\n")
-    
+
     include_directories(pet PRIVATE ${CMAKE_BINARY_DIR}/include/pet)
 
     # include PET headers directories
