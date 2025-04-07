@@ -1,208 +1,208 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define if HeaderSearchOptions::AddPath takes 4 arguments */
-#undef ADDPATH_TAKES_4_ARGUMENTS
+#cmakedefine ADDPATH_TAKES_4_ARGUMENTS
 
 /* Clang installation prefix */
-#undef CLANG_PREFIX
+#define CLANG_PREFIX "${CLANG_PREFIX}"
 
 /* Define if CompilerInstance::createDiagnostics takes argc and argv */
-#undef CREATEDIAGNOSTICS_TAKES_ARG
+#cmakedefine CREATEDIAGNOSTICS_TAKES_ARG
 
 /* Define if CompilerInstance::createPreprocessor takes TranslationUnitKind */
-#undef CREATEPREPROCESSOR_TAKES_TUKIND
+#cmakedefine CREATEPREPROCESSOR_TAKES_TUKIND
 
 /* Define if TargetInfo::CreateTargetInfo takes pointer */
-#undef CREATETARGETINFO_TAKES_POINTER
+#cmakedefine CREATETARGETINFO_TAKES_POINTER
 
 /* Define if TargetInfo::CreateTargetInfo takes shared_ptr */
-#undef CREATETARGETINFO_TAKES_SHARED_PTR
+#cmakedefine CREATETARGETINFO_TAKES_SHARED_PTR
 
 /* Define if CompilerInvocation::CreateFromArgs takes ArrayRef */
-#undef CREATE_FROM_ARGS_TAKES_ARRAYREF
+#cmakedefine CREATE_FROM_ARGS_TAKES_ARRAYREF
 
 /* Define if Driver constructor takes default image name */
-#undef DRIVER_CTOR_TAKES_DEFAULTIMAGENAME
+#cmakedefine DRIVER_CTOR_TAKES_DEFAULTIMAGENAME
 
 /* Define to DiagnosticClient for older versions of clang */
-#undef DiagnosticConsumer
+#cmakedefine DiagnosticConsumer
 
 /* Define to Diagnostic for newer versions of clang */
-#undef DiagnosticInfo
+#cmakedefine DiagnosticInfo Diagnostic
 
 /* Define to Diagnostic for older versions of clang */
-#undef DiagnosticsEngine
+#cmakedefine DiagnosticsEngine
 
 /* Define if getTypeInfo returns TypeInfo object */
-#undef GETTYPEINFORETURNSTYPEINFO
+#cmakedefine GETTYPEINFORETURNSTYPEINFO
 
 /* Define if llvm/ADT/OwningPtr.h exists */
-#undef HAVE_ADT_OWNINGPTR_H
+#cmakedefine HAVE_ADT_OWNINGPTR_H
 
 /* Define if clang/Basic/DiagnosticOptions.h exists */
-#undef HAVE_BASIC_DIAGNOSTICOPTIONS_H
+#cmakedefine HAVE_BASIC_DIAGNOSTICOPTIONS_H
 
 /* Define if getBeginLoc and getEndLoc should be used */
-#undef HAVE_BEGIN_END_LOC
+#cmakedefine HAVE_BEGIN_END_LOC
 
 /* Define if clang/Basic/LangStandard.h exists */
-#undef HAVE_CLANG_BASIC_LANGSTANDARD_H
+#cmakedefine HAVE_CLANG_BASIC_LANGSTANDARD_H
 
 /* Define if Driver constructor takes CXXIsProduction argument */
-#undef HAVE_CXXISPRODUCTION
+#cmakedefine HAVE_CXXISPRODUCTION
 
 /* Define if DecayedType is defined */
-#undef HAVE_DECAYEDTYPE
+#cmakedefine HAVE_DECAYEDTYPE
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
+#cmakedefine HAVE_DLFCN_H 1
 
 /* Define if SourceManager has findLocationAfterToken method */
-#undef HAVE_FINDLOCATIONAFTERTOKEN
+#cmakedefine HAVE_FINDLOCATIONAFTERTOKEN
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
+#cmakedefine HAVE_INTTYPES_H 1
 
 /* Define if Driver constructor takes IsProduction argument */
-#undef HAVE_ISPRODUCTION
+#cmakedefine HAVE_ISPRODUCTION
 
 /* Define if clang/Lex/HeaderSearchOptions.h exists */
-#undef HAVE_LEX_HEADERSEARCHOPTIONS_H
+#cmakedefine HAVE_LEX_HEADERSEARCHOPTIONS_H
 
 /* Define if clang/Lex/PreprocessorOptions.h exists */
-#undef HAVE_LEX_PREPROCESSOROPTIONS_H
+#cmakedefine HAVE_LEX_PREPROCESSOROPTIONS_H
 
 /* Define if llvm/Option/Arg.h exists */
-#undef HAVE_LLVM_OPTION_ARG_H
+#cmakedefine HAVE_LLVM_OPTION_ARG_H
 
 /* Define if SourceManager has a setMainFileID method */
-#undef HAVE_SETMAINFILEID
+#cmakedefine HAVE_SETMAINFILEID
 
 /* Define if DiagnosticsEngine::setDiagnosticGroupWarningAsError is available
    */
-#undef HAVE_SET_DIAGNOSTIC_GROUP_WARNING_AS_ERROR
+#cmakedefine HAVE_SET_DIAGNOSTIC_GROUP_WARNING_AS_ERROR
 
 /* Define to 1 if you have the <stdint.h> header file. */
-#undef HAVE_STDINT_H
+#cmakedefine HAVE_STDINT_H 1
 
 /* Define to 1 if you have the <stdio.h> header file. */
-#undef HAVE_STDIO_H
+#cmakedefine HAVE_STDIO_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
-#undef HAVE_STDLIB_H
+#cmakedefine HAVE_STDLIB_H 1
 
 /* Define if StmtRange class is available */
-#undef HAVE_STMTRANGE
+#cmakedefine HAVE_STMTRANGE
 
 /* Define to 1 if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
+#cmakedefine HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
-#undef HAVE_STRING_H
+#cmakedefine HAVE_STRING_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-#undef HAVE_SYS_STAT_H
+#cmakedefine HAVE_SYS_STAT_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#undef HAVE_SYS_TYPES_H
+#cmakedefine HAVE_SYS_TYPES_H 1
 
 /* Define if llvm/TargetParser/Host.h exists */
-#undef HAVE_TARGETPARSER_HOST_H
+#cmakedefine HAVE_TARGETPARSER_HOST_H
 
 /* Define if SourceManager has translateLineCol method */
-#undef HAVE_TRANSLATELINECOL
+#cmakedefine HAVE_TRANSLATELINECOL
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#undef HAVE_UNISTD_H
+#cmakedefine HAVE_UNISTD_H 1
 
 /* Return type of HandleTopLevelDeclReturn */
-#undef HandleTopLevelDeclContinue
+#cmakedefine HandleTopLevelDeclContinue ${HandleTopLevelDeclContinue}
 
 /* Return type of HandleTopLevelDeclReturn */
-#undef HandleTopLevelDeclReturn
+#cmakedefine HandleTopLevelDeclReturn ${HandleTopLevelDeclReturn}
 
 /* Define to Language::C or InputKind::C for newer versions of clang */
-#undef IK_C
+#define IK_C ${IK_C}
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
-#undef LT_OBJDIR
+#define LT_OBJDIR "./build/bin/"
 
 /* Name of package */
-#undef PACKAGE
+#define PACKAGE "pet"
 
 /* Define to the address where bug reports for this package should be sent. */
-#undef PACKAGE_BUGREPORT
+#define PACKAGE_BUGREPORT "sheensong@163.com"
 
 /* Define to the full name of this package. */
-#undef PACKAGE_NAME
+#define PACKAGE_NAME "pet"
 
 /* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
+#define PACKAGE_STRING "pet ${PET_VERSION}"
 
 /* Define to the one symbol short name of this package. */
-#undef PACKAGE_TARNAME
+#define PACKAGE_TARNAME "pet"
 
 /* Define to the home page for this package. */
-#undef PACKAGE_URL
+#define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#undef PACKAGE_VERSION
+#define PACKAGE_VERSION "${PET_VERSION}"
 
 /* Define to PragmaIntroducerKind for older versions of clang */
-#undef PragmaIntroducer
+#cmakedefine PragmaIntroducer
 
 /* Defined if CompilerInstance::setInvocation takes a shared_ptr */
-#undef SETINVOCATION_TAKES_SHARED_PTR
+#cmakedefine SETINVOCATION_TAKES_SHARED_PTR
 
 /* Define to class with setLangDefaults method */
-#undef SETLANGDEFAULTS
+#define SETLANGDEFAULTS ${SETLANGDEFAULTS}
 
 /* Define if CompilerInvocation::setLangDefaults takes 5 arguments */
-#undef SETLANGDEFAULTS_TAKES_5_ARGUMENTS
+#cmakedefine SETLANGDEFAULTS_TAKES_5_ARGUMENTS
 
 /* Define to 1 if all of the C90 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
-#undef STDC_HEADERS
+#define STDC_HEADERS 1
 
 /* Define to TypedefDecl for older versions of clang */
-#undef TypedefNameDecl
+#cmakedefine TypedefNameDecl
 
 /* Define if Driver::BuildCompilation takes ArrayRef */
-#undef USE_ARRAYREF
+#cmakedefine USE_ARRAYREF
 
 /* Define if ArraySizeModifier appears inside ArrayType */
-#undef USE_NESTED_ARRAY_SIZE_MODIFIER
+#cmakedefine USE_NESTED_ARRAY_SIZE_MODIFIER
 
 /* Version number of package */
-#undef VERSION
+#define VERSION "0.11.8"
 
 /* Define to ext_implicit_function_decl for older versions of clang */
-#undef ext_implicit_function_decl_c99
+#cmakedefine ext_implicit_function_decl_c99 ext_implicit_function_decl
 
 /* Define to getHostTriple for older versions of clang */
-#undef getDefaultTargetTriple
+#cmakedefine getDefaultTargetTriple
 
 /* Define to getInstantiationColumnNumber for older versions of clang */
-#undef getExpansionColumnNumber
+#cmakedefine getExpansionColumnNumber
 
 /* Define to getInstantiationLineNumber for older versions of clang */
-#undef getExpansionLineNumber
+#cmakedefine getExpansionLineNumber
 
 /* Define to getInstantiationLoc for older versions of clang */
-#undef getExpansionLoc
+#cmakedefine getExpansionLoc
 
 /* Define to getLangOptions for older versions of clang */
-#undef getLangOpts
+#cmakedefine getLangOpts
 
 /* Define to getFileLocWithOffset for older versions of clang */
-#undef getLocWithOffset
+#cmakedefine getLocWithOffset
 
 /* Define to getResultType for older versions of clang */
-#undef getReturnType
+#cmakedefine getReturnType
 
 /* Define to getTypedefForAnonDecl for older versions of clang */
-#undef getTypedefNameForAnonDecl
+#cmakedefine getTypedefNameForAnonDecl
 
 /* Define to InitializeBuiltins for older versions of clang */
-#undef initializeBuiltins
+#cmakedefine initializeBuiltins
