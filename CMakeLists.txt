@@ -5,31 +5,6 @@ project(AutoStash LANGUAGES C CXX)
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 17)
 
-# # Force using system GCC at the beginning of CMake file
-# # TODO: Remove this once we have a proper way to detect the compiler like m4 in isl.
-# message(STATUS "Only Support the system GCC")
-# set(CMAKE_C_COMPILER "/usr/bin/gcc" CACHE STRING "C compiler" FORCE)
-# set(CMAKE_CXX_COMPILER "/usr/bin/g++" CACHE STRING "C++ compiler" FORCE)
-# message(STATUS "C Compiler: ${CMAKE_C_COMPILER}")
-# message(STATUS "C++ Compiler: ${CMAKE_CXX_COMPILER}")
-
-# # TODO: This is a hack to get the include paths(need to be fixed).
-# # Get compiler information, including default include paths
-# execute_process(
-#     COMMAND ${CMAKE_CXX_COMPILER} -E -x c++ -v /dev/null
-#     ERROR_VARIABLE compiler_info
-#     OUTPUT_QUIET
-# )
-# # Parse output to get include paths - fix path filtering
-# string(REGEX MATCHALL "/usr/include[^\n]+|/usr/lib[^\n]+" include_paths "${compiler_info}")
-# # Add system standard library paths, only include valid directories
-# foreach(path ${include_paths})
-#     if(IS_DIRECTORY "${path}")
-#         include_directories(isl pet ppcg "${path}")
-#         message(STATUS "Adding include path: ${path}")
-#     endif()
-# endforeach()
-
 # # Configure compiler by clang and clang++
 set(CMAKE_C_COMPILER clang CACHE STRING "C compiler" FORCE)
 set(CMAKE_CXX_COMPILER clang++ CACHE STRING "C++ compiler" FORCE)
@@ -135,8 +110,6 @@ find_package(LLVM REQUIRED CONFIG)
 if(LLVM_FOUND)
     message(STATUS "Found LLVM: ${LLVM_FOUND}")
     message(STATUS "LLVM include directories: ${LLVM_INCLUDE_DIRS}")
-    message(STATUS "LLVM libraries: ${LLVM_LIBRARIES}")
-    include_directories(${LLVM_INCLUDE_DIRS})
 else()
     message(STATUS "LLVM not found")
 endif()
@@ -144,10 +117,46 @@ find_package(Clang REQUIRED CONFIG)
 if(Clang_FOUND)
     message(STATUS "Found Clang: ${Clang_FOUND}")
     message(STATUS "Clang include directories: ${CLANG_INCLUDE_DIRS}")
-    message(STATUS "Clang libraries: ${CLANG_LIBRARIES}")
-    include_directories(${CLANG_INCLUDE_DIRS})
 else()
     message(STATUS "Clang not found")
+endif()
+
+if(LLVM_FOUND)
+    set(LLVM_REQUIRED_LIBS
+        LLVMSupport
+        LLVMCore
+        LLVMBinaryFormat
+        LLVMRemarks
+        LLVMBitstreamReader
+        LLVMDemangle
+        LLVMTargetParser
+        LLVMTextAPI
+    )
+    list(APPEND CMAKE_REQUIRED_INCLUDES ${LLVM_INCLUDE_DIRS})
+    list(APPEND CMAKE_REQUIRED_LIBRARIES ${LLVM_REQUIRED_LIBS})
+    message(STATUS "Appended LLVM include: ${LLVM_INCLUDE_DIRS}")
+    message(STATUS "Appended LLVM libraries: ${LLVM_REQUIRED_LIBS}")
+endif()
+
+if(Clang_FOUND)
+    set(CLANG_REQUIRED_LIBS
+        clangBasic
+        clangLex
+        clangFrontend
+        clangSerialization
+        clangParse 
+        clangSema
+        clangAnalysis
+        clangAST
+        clangEdit
+        clangASTMatchers
+        clangDriver
+        clangSupport
+    )
+    list(APPEND CMAKE_REQUIRED_INCLUDES ${CLANG_INCLUDE_DIRS})
+    list(APPEND CMAKE_REQUIRED_LIBRARIES ${CLANG_REQUIRED_LIBS})
+    message(STATUS "Appended Clang include: ${CLANG_INCLUDE_DIRS}")
+    message(STATUS "Appended Clang libraries: ${CLANG_REQUIRED_LIBS}")
 endif()
 
 # Set default build type to Debug
@@ -189,6 +198,7 @@ include(CheckCSourceCompiles)
 include(CheckIncludeFileCXX)
 include(CheckIncludeFile)
 include(CheckSymbolExists)
+include(CheckTypeSize)
 
 # Like check_c_source_compiles, but sets the result to either
 # 0 (error while compiling) or 1 (compiled successfully)
@@ -541,33 +551,25 @@ if(BUILD_PET)
     ########################################################################
     message(STATUS "Checking Clang features for PET compatibility")
 
-    # Include required modules for feature detection
-    include(CheckIncludeFile)
-    include(CheckCXXSourceCompiles)
-    include(CheckTypeSize)
-
-    # Save current CMAKE_REQUIRED variables
-    set(CMAKE_REQUIRED_FLAGS_SAVE ${CMAKE_REQUIRED_FLAGS})
-    set(CMAKE_REQUIRED_INCLUDES_SAVE ${CMAKE_REQUIRED_INCLUDES})
-    set(CMAKE_REQUIRED_LIBRARIES_SAVE ${CMAKE_REQUIRED_LIBRARIES})
-
     # Set up compiler flags for Clang detection
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
         set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Wno-error")
     endif()
 
-    # Add LLVM/Clang include directories to CMAKE_REQUIRED_INCLUDES
-    if(LLVM_INCLUDE_DIRS)
-        list(APPEND CMAKE_REQUIRED_INCLUDES ${LLVM_INCLUDE_DIRS})
+    # Find LLVM and Clang prefix
+    if(LLVM_FOUND)
+        set(CLANG_PREFIX ${LLVM_INSTALL_PREFIX})
+    else()
+        # Try to find clang executable and derive prefix
+        find_program(CLANG_EXECUTABLE clang)
+        if(CLANG_EXECUTABLE)
+            get_filename_component(CLANG_BIN_DIR ${CLANG_EXECUTABLE} DIRECTORY)
+            get_filename_component(CLANG_PREFIX ${CLANG_BIN_DIR} DIRECTORY)
+        else()
+            set(CLANG_PREFIX "/usr")
+        endif()
     endif()
-    if(CLANG_INCLUDE_DIRS)
-        list(APPEND CMAKE_REQUIRED_INCLUDES ${CLANG_INCLUDE_DIRS})
-    endif()
-
-    # Add LLVM libraries to CMAKE_REQUIRED_LIBRARIES for linking tests
-    if(LLVM_LIBRARIES)
-        list(APPEND CMAKE_REQUIRED_LIBRARIES ${LLVM_LIBRARIES})
-    endif()
+    message(STATUS "CLANG_PREFIX: ${CLANG_PREFIX}")
 
     # Check for standard headers
     check_include_file("dlfcn.h" HAVE_DLFCN_H)
@@ -587,6 +589,11 @@ if(BUILD_PET)
     endif()
 
     # Check for Clang-specific headers
+    check_cxx_source_compiles("
+        #include <clang/Basic/SourceLocation.h>
+        int main() { return 0; }" 
+        HAVE_BASIC_SOURCELOCATION_H)
+
     check_cxx_source_compiles("
         #include <clang/Basic/DiagnosticOptions.h>
         int main() { return 0; }" 
@@ -622,83 +629,20 @@ if(BUILD_PET)
         int main() { return 0; }" 
         HAVE_TARGETPARSER_HOST_H)
 
-    # Check for setLangDefaults location and signature
+    # Check for method name variations (backwards compatibility)
     check_cxx_source_compiles("
-        #include <clang/Basic/LangOptions.h>
+        #include <llvm/TargetParser/Host.h>
         #include <clang/Basic/TargetInfo.h>
-        #include <clang/Lex/PreprocessorOptions.h>
-        int main() { 
-            clang::LangOptions LO;
-            clang::LangOptions::setLangDefaults(LO, clang::Language::C, llvm::Triple(), 
-                                              clang::PreprocessorOptions(), clang::LangStandard::lang_unspecified); 
-            return 0; 
-        }" 
-        SETLANGDEFAULTS_IS_LANGOPTIONS)
-
-    if(SETLANGDEFAULTS_IS_LANGOPTIONS)
-        set(SETLANGDEFAULTS "LangOptions")
-    else()
-        check_cxx_source_compiles("
-            #include <clang/Frontend/CompilerInvocation.h>
-            #include <clang/Basic/LangOptions.h>
-            #include <clang/Basic/TargetInfo.h>
-            #include <clang/Lex/PreprocessorOptions.h>
-            int main() { 
-                clang::LangOptions LO;
-                clang::CompilerInvocation::setLangDefaults(LO, clang::Language::C, llvm::Triple(), 
-                                                         clang::PreprocessorOptions(), clang::LangStandard::lang_unspecified); 
-                return 0; 
-            }" 
-            SETLANGDEFAULTS_IS_COMPILERINVOCATION)
-        if(SETLANGDEFAULTS_IS_COMPILERINVOCATION)
-            set(SETLANGDEFAULTS "CompilerInvocation")
-        else()
-            set(SETLANGDEFAULTS "CompilerInvocation")  # default fallback
-        endif()
-    endif()
-
-    # Check if setLangDefaults takes 5 arguments
-    check_cxx_source_compiles("
-        #include <clang/Basic/LangOptions.h>
-        #include <clang/Basic/TargetInfo.h>
-        #include <clang/Lex/PreprocessorOptions.h>
-        #include <clang/Frontend/CompilerInvocation.h>
         int main() {
-            clang::LangOptions LO;
-            llvm::Triple T;
-            clang::PreprocessorOptions PO;
-            ${SETLANGDEFAULTS}::setLangDefaults(LO, clang::Language::C, T, PO, clang::LangStandard::lang_unspecified);
+            auto T = llvm::sys::getDefaultTargetTriple();
             return 0;
         }"
-        SETLANGDEFAULTS_TAKES_5_ARGUMENTS)
-
-    # Check for InputKind::Language definition
-    check_cxx_source_compiles("
-        #include <clang/Frontend/FrontendOptions.h>
-        int main() { 
-            clang::Language L = clang::Language::C; 
-            return 0; 
-        }" 
-        IK_C_IS_LANGUAGE_C)
-
-    if(IK_C_IS_LANGUAGE_C)
-        set(IK_C "Language::C")
-    else()
-        check_cxx_source_compiles("
-            #include <clang/Frontend/FrontendOptions.h>
-            int main() { 
-                clang::InputKind::Language L = clang::InputKind::C; 
-                return 0; 
-            }" 
-            IK_C_IS_INPUTKIND_C)
-        if(IK_C_IS_INPUTKIND_C)
-            set(IK_C "InputKind::C")
-        else()
-            set(IK_C "InputKind::C")  # fallback
-        endif()
+        HAVE_GETDEFAULTTARGETTRIPPLE)
+    if(NOT HAVE_GETDEFAULTTARGETTRIPPLE)
+        set(getDefaultTargetTriple "getHostTriple")
     endif()
 
-    # Check for DiagnosticInfo vs Diagnostic
+    # Check for DiagnosticInfo vs Diagnostic compatibility
     check_cxx_source_compiles("
         #include <clang/Basic/Diagnostic.h>
         int main() {
@@ -706,20 +650,9 @@ if(BUILD_PET)
             return 0;
         }"
         HAVE_DIAGNOSTIC_INFO)
+    
     if(NOT HAVE_DIAGNOSTIC_INFO)
         set(DiagnosticInfo "Diagnostic")
-    endif()
-
-    # Check for DiagnosticConsumer vs DiagnosticClient
-    check_cxx_source_compiles("
-        #include <clang/Basic/Diagnostic.h>
-        int main() {
-            clang::DiagnosticConsumer* DC = nullptr;
-            return 0;
-        }"
-        HAVE_DIAGNOSTIC_CONSUMER)
-    if(NOT HAVE_DIAGNOSTIC_CONSUMER)
-        set(DiagnosticConsumer "DiagnosticClient")
     endif()
 
     # Check for DiagnosticsEngine vs Diagnostic
@@ -730,6 +663,7 @@ if(BUILD_PET)
             return 0;
         }"
         HAVE_DIAGNOSTICS_ENGINE)
+    
     if(NOT HAVE_DIAGNOSTICS_ENGINE)
         set(DiagnosticsEngine "Diagnostic")
     endif()
@@ -737,6 +671,7 @@ if(BUILD_PET)
     # Check HandleTopLevelDecl return type
     check_cxx_source_compiles("
         #include <clang/AST/ASTConsumer.h>
+        #include <clang/AST/DeclGroup.h>
         class TestConsumer : public clang::ASTConsumer {
         public:
             bool HandleTopLevelDecl(clang::DeclGroupRef D) override { return true; }
@@ -779,6 +714,175 @@ if(BUILD_PET)
             CREATETARGETINFO_TAKES_POINTER)
     endif()
 
+    # Check if Driver::BuildCompilation takes ArrayRef
+    check_cxx_source_compiles("
+        #include <clang/Driver/Driver.h>
+        #include <llvm/ADT/ArrayRef.h>
+        #include <clang/Basic/DiagnosticIDs.h>
+        #include <clang/Basic/DiagnosticOptions.h>
+        #include <llvm/Support/VirtualFileSystem.h>
+        
+        int main() { 
+            clang::DiagnosticIDs diagIDs;
+            clang::DiagnosticOptions diagOpts;
+            clang::DiagnosticsEngine diagEngine(&diagIDs, &diagOpts);
+            clang::driver::Driver D(\"\", \"\", diagEngine);
+            llvm::ArrayRef<const char*> Args;
+            D.BuildCompilation(Args);
+            return 0; 
+        }"
+        USE_ARRAYREF)
+
+    # Check if CompilerInvocation::CreateFromArgs takes ArrayRef
+    check_cxx_source_compiles("
+        #include <clang/Frontend/CompilerInvocation.h>
+        #include <llvm/ADT/ArrayRef.h>
+        #include <memory>
+
+        int main() { 
+            llvm::ArrayRef<const char*> Args;
+            clang::DiagnosticsEngine DE(nullptr, nullptr);
+            auto invocation = std::make_shared<clang::CompilerInvocation>();
+            clang::CompilerInvocation::CreateFromArgs(*invocation, Args, DE);
+            return 0; 
+        }"
+        CREATE_FROM_ARGS_TAKES_ARRAYREF)
+    
+    check_cxx_source_compiles("
+        #include <clang/Lex/HeaderSearchOptions.h>
+        int main() {
+            using namespace clang;
+            clang::HeaderSearchOptions HSO;
+            HSO.AddPath(\"\", clang::frontend::Angled, false, false);
+            return 0;
+        }" ADDPATH_TAKES_4_ARGUMENTS)
+
+    # Check if CompilerInstance::createPreprocessor takes TranslationUnitKind
+    check_cxx_source_compiles("
+        #include <clang/Frontend/CompilerInstance.h>
+        int main() {
+            clang::CompilerInstance CI;
+            CI.createPreprocessor(clang::TU_Complete);
+            return 0;
+        }"
+        CREATEPREPROCESSOR_TAKES_TUKIND)
+
+    # Check for DecayedType availability
+    check_cxx_source_compiles("
+        #include <clang/AST/Type.h>
+        int main() { 
+            clang::DecayedType* DT = nullptr;
+            return 0; 
+        }"
+        HAVE_DECAYEDTYPE)
+
+    # Check if SourceManager has setMainFileID method
+    check_cxx_source_compiles("
+        #include <clang/Basic/SourceManager.h>
+        int main() {
+            clang::SourceManager* SM = nullptr;
+            SM->setMainFileID(clang::FileID());
+            return 0;
+        }"
+        HAVE_SETMAINFILEID)
+
+    # Check if SourceManager has findLocationAfterToken method
+    check_cxx_source_compiles("
+        #include <clang/Lex/Lexer.h>
+        #include <clang/Basic/SourceManager.h>
+        
+        int main() {
+            clang::SourceManager* SM = nullptr;
+            clang::SourceLocation SL;
+            clang::Lexer::findLocationAfterToken(SL, clang::tok::semi, *SM, clang::LangOptions(), false);
+            return 0;
+        }"
+        HAVE_FINDLOCATIONAFTERTOKEN)
+
+    # Check if SourceManager has translateLineCol method
+    check_cxx_source_compiles("
+        #include <clang/Basic/SourceManager.h>
+        int main() {
+            clang::SourceManager* SM = nullptr;
+            SM->translateLineCol(clang::FileID(), 1, 1);
+            return 0;
+        }"
+        HAVE_TRANSLATELINECOL)
+
+    # Check if ASTContext::getTypeInfo returns TypeInfo
+    check_cxx_source_compiles("
+        #include <clang/AST/ASTContext.h>
+        int main() {
+            clang::ASTContext* AC = nullptr;
+            clang::TypeInfo TI = AC->getTypeInfo(clang::QualType());
+            return 0;
+        }"
+        GETTYPEINFORETURNSTYPEINFO)
+
+    # Check for setLangDefaults location and signature
+    check_cxx_source_compiles("
+        #include <clang/Basic/LangOptions.h>
+        #include <clang/Basic/TargetInfo.h>
+        #include <vector>
+        #include <string>
+
+        int main() { 
+            clang::LangOptions LO;
+            std::vector<std::string> Includes;
+            clang::LangOptions::setLangDefaults(LO, clang::Language::C, llvm::Triple(), 
+                                            Includes, clang::LangStandard::lang_unspecified); 
+            return 0; 
+        }" 
+        SETLANGDEFAULTS_IS_LANGOPTIONS)
+
+    if(SETLANGDEFAULTS_IS_LANGOPTIONS)
+        set(SETLANGDEFAULTS "LangOptions")
+    else()
+        set(SETLANGDEFAULTS "CompilerInvocation")
+    endif()
+
+    # Check for InputKind::Language definition
+    check_cxx_source_compiles("
+        #include <clang/Frontend/FrontendOptions.h>
+        int main() { 
+            clang::Language L = clang::Language::C; 
+            return 0; 
+        }" 
+        IK_C_IS_LANGUAGE_C)
+    if(IK_C_IS_LANGUAGE_C)
+        set(IK_C "Language::C")
+    else()
+        set(IK_C "InputKind::C")
+    endif()
+
+    # Check if setLangDefaults takes 5 arguments
+    check_cxx_source_compiles("
+        #include <clang/Basic/TargetOptions.h>
+        #include <clang/Lex/PreprocessorOptions.h>
+        #include <clang/Frontend/CompilerInstance.h>
+        #include <string>
+        #include <vector>
+
+        struct setLangDefaultsArg4 {
+            setLangDefaultsArg4(clang::PreprocessorOptions &PO) : PO(PO) {}
+            operator clang::PreprocessorOptions &() { return PO; }
+            operator std::vector<std::string> &() { return PO.Includes; }
+
+            clang::PreprocessorOptions &PO;
+        };
+        int main() {
+            using namespace clang;
+            CompilerInstance *Clang;
+            TargetOptions TO;
+            llvm::Triple T(TO.Triple);
+            PreprocessorOptions PO;
+            ${SETLANGDEFAULTS}::setLangDefaults(Clang->getLangOpts(), ${IK_C},
+                    T, setLangDefaultsArg4(PO),
+                    LangStandard::lang_unspecified);
+            return 0;
+        }"
+        SETLANGDEFAULTS_TAKES_5_ARGUMENTS)
+
     # Check if CompilerInstance::setInvocation takes shared_ptr
     check_cxx_source_compiles("
         #include <clang/Frontend/CompilerInstance.h>
@@ -792,113 +896,6 @@ if(BUILD_PET)
         }"
         SETINVOCATION_TAKES_SHARED_PTR)
 
-    # Check if HeaderSearchOptions::AddPath takes 4 arguments
-    check_cxx_source_compiles("
-        #include <clang/Lex/HeaderSearchOptions.h>
-        int main() {
-            clang::HeaderSearchOptions HSO;
-            HSO.AddPath(\"/usr/include\", clang::frontend::Angled, false, false);
-            return 0;
-        }"
-        ADDPATH_TAKES_4_ARGUMENTS)
-
-    # Check for DecayedType availability
-    check_cxx_source_compiles("
-        #include <clang/AST/Type.h>
-        int main() { 
-            clang::DecayedType* DT = nullptr;
-            return 0; 
-        }"
-        HAVE_DECAYEDTYPE)
-
-    # Check if Driver::BuildCompilation takes ArrayRef
-    check_cxx_source_compiles("
-        #include <clang/Driver/Driver.h>
-        #include <llvm/ADT/ArrayRef.h>
-        int main() { 
-            clang::driver::Driver D(\"\", \"\", clang::DiagnosticsEngine(nullptr, nullptr, nullptr));
-            llvm::ArrayRef<const char*> Args;
-            D.BuildCompilation(Args);
-            return 0; 
-        }"
-        USE_ARRAYREF)
-
-    # Check if CompilerInvocation::CreateFromArgs takes ArrayRef
-    check_cxx_source_compiles("
-        #include <clang/Frontend/CompilerInvocation.h>
-        #include <llvm/ADT/ArrayRef.h>
-        int main() { 
-            llvm::ArrayRef<const char*> Args;
-            clang::DiagnosticsEngine DE(nullptr, nullptr);
-            clang::CompilerInvocation::CreateFromArgs(clang::CompilerInvocation(), Args, DE);
-            return 0; 
-        }"
-        CREATE_FROM_ARGS_TAKES_ARRAYREF)
-
-    # Check if ASTContext::getTypeInfo returns TypeInfo
-    check_cxx_source_compiles("
-        #include <clang/AST/ASTContext.h>
-        int main() {
-            clang::ASTContext* AC = nullptr;
-            clang::TypeInfo TI = AC->getTypeInfo(clang::QualType());
-            return 0;
-        }"
-        GETTYPEINFORETURNSTYPEINFO)
-
-    # Check if CompilerInstance::createPreprocessor takes TranslationUnitKind
-    check_cxx_source_compiles("
-        #include <clang/Frontend/CompilerInstance.h>
-        int main() {
-            clang::CompilerInstance CI;
-            CI.createPreprocessor(clang::TU_Complete);
-            return 0;
-        }"
-        CREATEPREPROCESSOR_TAKES_TUKIND)
-
-    # Check if CompilerInstance::createDiagnostics takes argc/argv
-    check_cxx_source_compiles("
-        #include <clang/Frontend/CompilerInstance.h>
-        int main() {
-            clang::CompilerInstance CI;
-            int argc = 0; 
-            const char **argv = nullptr;
-            CI.createDiagnostics(argc, argv);
-            return 0;
-        }"
-        CREATEDIAGNOSTICS_TAKES_ARG)
-
-    # Check if SourceManager has setMainFileID method
-    check_cxx_source_compiles("
-        #include <clang/Basic/SourceManager.h>
-        int main() {
-            clang::SourceManager SM(clang::DiagnosticsEngine(nullptr, nullptr), clang::FileManager());
-            SM.setMainFileID(clang::FileID());
-            return 0;
-        }"
-        HAVE_SETMAINFILEID)
-
-    # Check if SourceManager has findLocationAfterToken method
-    check_cxx_source_compiles("
-        #include <clang/Lex/Lexer.h>
-        #include <clang/Basic/SourceManager.h>
-        int main() {
-            clang::SourceManager SM(clang::DiagnosticsEngine(nullptr, nullptr), clang::FileManager());
-            clang::SourceLocation SL;
-            clang::Lexer::findLocationAfterToken(SL, clang::tok::semi, SM, clang::LangOptions(), false);
-            return 0;
-        }"
-        HAVE_FINDLOCATIONAFTERTOKEN)
-
-    # Check if SourceManager has translateLineCol method
-    check_cxx_source_compiles("
-        #include <clang/Basic/SourceManager.h>
-        int main() {
-            clang::SourceManager SM(clang::DiagnosticsEngine(nullptr, nullptr), clang::FileManager());
-            SM.translateLineCol(clang::FileID(), 1, 1);
-            return 0;
-        }"
-        HAVE_TRANSLATELINECOL)
-
     # Check for getBeginLoc/getEndLoc methods
     check_cxx_source_compiles("
         #include <clang/AST/Decl.h>
@@ -909,6 +906,28 @@ if(BUILD_PET)
             return 0;
         }"
         HAVE_BEGIN_END_LOC)
+
+    # Check if DiagnosticsEngine has setDiagnosticGroupWarningAsError
+    check_cxx_source_compiles("
+        #include <clang/Basic/Diagnostic.h>
+        int main() {
+            clang::DiagnosticsEngine DE(nullptr, nullptr);
+            DE.setDiagnosticGroupWarningAsError(\"test\", true);
+            return 0;
+        }"
+        HAVE_SET_DIAGNOSTIC_GROUP_WARNING_AS_ERROR)
+
+    # Check for ext_implicit_function_decl_c99
+    check_cxx_source_compiles("
+        #include <clang/Basic/DiagnosticCategories.h>
+        int main() {
+            auto DiagID = clang::diag::ext_implicit_function_decl_c99;
+            return 0;
+        }"
+        HAVE_EXT_IMPLICIT_FUNCTION_DECL_C99)
+    if(NOT HAVE_EXT_IMPLICIT_FUNCTION_DECL_C99)
+        set(ext_implicit_function_decl_c99 "ext_implicit_function_decl")
+    endif()
 
     # Check for StmtRange class
     check_cxx_source_compiles("
@@ -928,43 +947,30 @@ if(BUILD_PET)
         }"
         USE_NESTED_ARRAY_SIZE_MODIFIER)
 
-    # Check if DiagnosticsEngine has setDiagnosticGroupWarningAsError
+    # Check if CompilerInstance::createDiagnostics takes argc/argv
+    check_cxx_source_compiles("
+        #include <clang/Frontend/CompilerInstance.h>
+        int main() {
+            using namespace clang;
+            CompilerInstance *Clang;
+            Clang->createDiagnostics();
+            return 0;
+        }"
+        NO_CREATEDIAGNOSTICS_TAKES_ARG)
+    if(NOT NO_CREATEDIAGNOSTICS_TAKES_ARG)
+        set(CREATEDIAGNOSTICS_TAKES_ARG "1")
+    endif()
+
+    # Check for DiagnosticConsumer vs DiagnosticClient
     check_cxx_source_compiles("
         #include <clang/Basic/Diagnostic.h>
         int main() {
-            clang::DiagnosticsEngine DE(nullptr, nullptr);
-            DE.setDiagnosticGroupWarningAsError(\"test\", true);
+            clang::DiagnosticConsumer* DC = nullptr;
             return 0;
         }"
-        HAVE_SET_DIAGNOSTIC_GROUP_WARNING_AS_ERROR)
-
-    # Check for Driver constructor variations
-    check_cxx_source_compiles("
-        #include <clang/Driver/Driver.h>
-        int main() { 
-            clang::driver::Driver D(\"\", \"\", clang::DiagnosticsEngine(nullptr, nullptr), \"\", true);
-            return 0; 
-        }"
-        DRIVER_CTOR_TAKES_DEFAULTIMAGENAME)
-
-    # Check if Driver constructor takes CXXIsProduction argument
-    check_cxx_source_compiles("
-        #include <clang/Driver/Driver.h>
-        int main() { 
-            clang::driver::Driver D(\"\", \"\", clang::DiagnosticsEngine(nullptr, nullptr), true);
-            return 0; 
-        }"
-        HAVE_CXXISPRODUCTION)
-
-    # Check if Driver constructor takes IsProduction argument
-    if(NOT HAVE_CXXISPRODUCTION)
-        check_cxx_source_compiles("
-            #include <clang/Driver/Driver.h>
-            int main() { 
-                clang::driver::Driver D(\"\", \"\", clang::DiagnosticsEngine(nullptr, nullptr), false);
-                return 0; 
-            }"
-            HAVE_ISPRODUCTION)
+        HAVE_DIAGNOSTIC_CONSUMER)
+    if(NOT HAVE_DIAGNOSTIC_CONSUMER)
+        set(DiagnosticConsumer "DiagnosticClient")
     endif()
 
     # Check for TypedefNameDecl vs TypedefDecl
@@ -991,31 +997,46 @@ if(BUILD_PET)
         set(PragmaIntroducer "PragmaIntroducerKind")
     endif()
 
-    # Check for method name variations (backwards compatibility)
-    check_cxx_source_compiles("
-        #include <clang/Basic/TargetInfo.h>
-        int main() {
-            llvm::Triple T = llvm::sys::getDefaultTargetTriple();
-            return 0;
-        }"
-        HAVE_GETDEFAULTTARGETTRIPPLE)
-    if(NOT HAVE_GETDEFAULTTARGETTRIPPLE)
-        set(getDefaultTargetTriple "getHostTriple")
-    endif()
-
     # Check for expansion vs instantiation methods
     check_cxx_source_compiles("
         #include <clang/Basic/SourceManager.h>
         int main() {
-            clang::SourceManager SM(clang::DiagnosticsEngine(nullptr, nullptr), clang::FileManager());
-            clang::SourceLocation SL;
-            unsigned col = SM.getExpansionColumnNumber(SL);
+            using namespace clang;
+            SourceManager *sm = nullptr;
+            SourceLocation sl;
+            sm->getExpansionColumnNumber(sl);
             return 0;
         }"
         HAVE_GETEXPANSIONCOLUMNNUMBER)
+
+    check_cxx_source_compiles("
+        #include <clang/Basic/SourceManager.h>
+        int main() {
+            using namespace clang;
+            SourceManager *sm = nullptr;
+            SourceLocation sl;
+            sm->getExpansionLineNumber(sl);
+            return 0;
+        }"
+        HAVE_GETEXPANSIONLINENUMBER)
+
+    check_cxx_source_compiles("
+        #include <clang/Basic/SourceManager.h>
+        int main() {
+            using namespace clang;
+            SourceManager *sm = nullptr;
+            SourceLocation sl;
+            sm->getExpansionLoc(sl);
+            return 0;
+        }"
+        HAVE_GETEXPANSIONLOC)
     if(NOT HAVE_GETEXPANSIONCOLUMNNUMBER)
         set(getExpansionColumnNumber "getInstantiationColumnNumber")
+    endif()
+    if(NOT HAVE_GETEXPANSIONLINENUMBER)
         set(getExpansionLineNumber "getInstantiationLineNumber")
+    endif()
+    if(NOT HAVE_GETEXPANSIONLOC)
         set(getExpansionLoc "getInstantiationLoc")
     endif()
 
@@ -1036,9 +1057,8 @@ if(BUILD_PET)
     check_cxx_source_compiles("
         #include <clang/Basic/SourceManager.h>
         int main() {
-            clang::SourceManager SM(clang::DiagnosticsEngine(nullptr, nullptr), clang::FileManager());
-            clang::SourceLocation SL;
-            clang::SourceLocation NewSL = SM.getLocWithOffset(SL, 1);
+            clang::SourceLocation *loc = nullptr;
+            auto res = loc->getLocWithOffset(1);
             return 0;
         }"
         HAVE_GETLOCWITHOFFSET)
@@ -1063,8 +1083,8 @@ if(BUILD_PET)
     check_cxx_source_compiles("
         #include <clang/AST/Decl.h>
         int main() {
-            clang::TagDecl* TD = nullptr;
-            clang::TypedefNameDecl* TND = TD->getTypedefNameForAnonDecl();
+            clang::RecordDecl *decl = nullptr;
+            auto res = decl->getTypedefNameForAnonDecl();
             return 0;
         }"
         HAVE_GETTYPEDEFNAMEFORANONDECL)
@@ -1074,11 +1094,13 @@ if(BUILD_PET)
 
     # Check for initializeBuiltins vs InitializeBuiltins
     check_cxx_source_compiles("
-        #include <clang/Basic/TargetInfo.h>
+        #include <clang/Basic/Builtins.h>
+        #include <clang/Basic/LangOptions.h>
+        #include <clang/Lex/Preprocessor.h>
         int main() {
-            clang::TargetInfo* TI = nullptr;
+            clang::LangOptions LO;
             clang::Preprocessor* PP = nullptr;
-            TI->initializeBuiltins(*PP);
+            PP->getBuiltinInfo().initializeBuiltins(PP->getIdentifierTable(), LO);
             return 0;
         }"
         HAVE_INITIALIZEBUILTINS)
@@ -1086,38 +1108,40 @@ if(BUILD_PET)
         set(initializeBuiltins "InitializeBuiltins")
     endif()
 
-    # Check for ext_implicit_function_decl_c99
-    check_cxx_source_compiles("
-        #include <clang/Basic/DiagnosticSemaKinds.h>
-        int main() {
-            unsigned DiagID = clang::diag::ext_implicit_function_decl_c99;
-            return 0;
-        }"
-        HAVE_EXT_IMPLICIT_FUNCTION_DECL_C99)
-    if(NOT HAVE_EXT_IMPLICIT_FUNCTION_DECL_C99)
-        set(ext_implicit_function_decl_c99 "ext_implicit_function_decl")
+    # Handle true/false for boolean flags in CMake
+    if(STDC_HEADERS)
+        set(STDC_HEADERS 1)
     endif()
-
-    # Find LLVM and Clang prefix
-    if(LLVM_FOUND)
-        set(CLANG_PREFIX ${LLVM_INSTALL_PREFIX})
-    else()
-        # Try to find clang executable and derive prefix
-        find_program(CLANG_EXECUTABLE clang)
-        if(CLANG_EXECUTABLE)
-            get_filename_component(CLANG_BIN_DIR ${CLANG_EXECUTABLE} DIRECTORY)
-            get_filename_component(CLANG_PREFIX ${CLANG_BIN_DIR} DIRECTORY)
-        else()
-            set(CLANG_PREFIX "/usr")
-        endif()
+    if(HAVE_DLFCN_H)
+        set(HAVE_DLFCN_H 1)
     endif()
-
-    message(STATUS "CLANG_PREFIX: ${CLANG_PREFIX}")
-
-    # Restore CMAKE_REQUIRED variables
-    set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_SAVE})
-    set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES_SAVE})
-    set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_SAVE})
+    if(HAVE_INTTYPES_H)
+        set(HAVE_INTTYPES_H 1)
+    endif()
+    if(HAVE_STDINT_H)
+        set(HAVE_STDINT_H 1)
+    endif()
+    if(HAVE_STDIO_H)
+        set(HAVE_STDIO_H 1)
+    endif()
+    if(HAVE_STDLIB_H)
+        set(HAVE_STDLIB_H 1)
+    endif()
+    if(HAVE_STRINGS_H)
+        set(HAVE_STRINGS_H 1)
+    endif()
+    if(HAVE_STRING_H)
+        set(HAVE_STRING_H 1)
+    endif()
+    if(HAVE_SYS_STAT_H)
+        set(HAVE_SYS_STAT_H 1)
+    endif()
+    if(HAVE_SYS_TYPES_H)
+        set(HAVE_SYS_TYPES_H 1)
+    endif()
+    if(HAVE_UNISTD_H)
+        set(HAVE_UNISTD_H 1)
+    endif()
 
     # Create PET configuration header file
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/pet_config.h.cmake" "${CMAKE_BINARY_DIR}/include/pet/config.h")
@@ -1133,17 +1157,18 @@ if(BUILD_PET)
 
     # Add Clang dependency libraries
     set(CLANG_REQUIRED_LIBS
-        clangAST
-        clangBasic
-        clangLex
-        clangSerialization
         clangFrontend
-        clangDriver
-        clangParse
+        clangSerialization
+        clangParse 
         clangSema
         clangAnalysis
+        clangAST
+        clangLex
         clangEdit
         clangASTMatchers
+        clangDriver
+        clangBasic
+        clangSupport
     )
 
     message(STATUS "PET Clang compatibility checks completed")
