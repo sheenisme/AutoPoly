@@ -1,4 +1,4 @@
-/* config.h.in.  Generated from configure.ac by autoheader.  */
+/* config.h.cmake - Configuration template for PET */
 
 /* Define if HeaderSearchOptions::AddPath takes 4 arguments */
 #cmakedefine ADDPATH_TAKES_4_ARGUMENTS
@@ -25,13 +25,13 @@
 #cmakedefine DRIVER_CTOR_TAKES_DEFAULTIMAGENAME
 
 /* Define to DiagnosticClient for older versions of clang */
-#cmakedefine DiagnosticConsumer
+#cmakedefine DiagnosticConsumer ${DiagnosticConsumer}
 
 /* Define to Diagnostic for newer versions of clang */
-#cmakedefine DiagnosticInfo Diagnostic
+#cmakedefine DiagnosticInfo ${DiagnosticInfo}
 
 /* Define to Diagnostic for older versions of clang */
-#cmakedefine DiagnosticsEngine
+#cmakedefine DiagnosticsEngine ${DiagnosticsEngine}
 
 /* Define if getTypeInfo returns TypeInfo object */
 #cmakedefine GETTYPEINFORETURNSTYPEINFO
@@ -78,8 +78,7 @@
 /* Define if SourceManager has a setMainFileID method */
 #cmakedefine HAVE_SETMAINFILEID
 
-/* Define if DiagnosticsEngine::setDiagnosticGroupWarningAsError is available
-   */
+/* Define if DiagnosticsEngine::setDiagnosticGroupWarningAsError is available */
 #cmakedefine HAVE_SET_DIAGNOSTIC_GROUP_WARNING_AS_ERROR
 
 /* Define to 1 if you have the <stdint.h> header file. */
@@ -149,7 +148,7 @@
 #define PACKAGE_VERSION "${PET_VERSION}"
 
 /* Define to PragmaIntroducerKind for older versions of clang */
-#cmakedefine PragmaIntroducer
+#cmakedefine PragmaIntroducer ${PragmaIntroducer}
 
 /* Defined if CompilerInstance::setInvocation takes a shared_ptr */
 #cmakedefine SETINVOCATION_TAKES_SHARED_PTR
@@ -163,10 +162,10 @@
 /* Define to 1 if all of the C90 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
-#define STDC_HEADERS 1
+#cmakedefine STDC_HEADERS 1
 
 /* Define to TypedefDecl for older versions of clang */
-#cmakedefine TypedefNameDecl
+#cmakedefine TypedefNameDecl ${TypedefNameDecl}
 
 /* Define if Driver::BuildCompilation takes ArrayRef */
 #cmakedefine USE_ARRAYREF
@@ -175,34 +174,34 @@
 #cmakedefine USE_NESTED_ARRAY_SIZE_MODIFIER
 
 /* Version number of package */
-#define VERSION "0.11.8"
+#define VERSION "${PET_VERSION}"
 
 /* Define to ext_implicit_function_decl for older versions of clang */
-#cmakedefine ext_implicit_function_decl_c99 ext_implicit_function_decl
+#cmakedefine ext_implicit_function_decl_c99 ${ext_implicit_function_decl_c99}
 
 /* Define to getHostTriple for older versions of clang */
-#cmakedefine getDefaultTargetTriple
+#cmakedefine getDefaultTargetTriple ${getDefaultTargetTriple}
 
 /* Define to getInstantiationColumnNumber for older versions of clang */
-#cmakedefine getExpansionColumnNumber
+#cmakedefine getExpansionColumnNumber ${getExpansionColumnNumber}
 
 /* Define to getInstantiationLineNumber for older versions of clang */
-#cmakedefine getExpansionLineNumber
+#cmakedefine getExpansionLineNumber ${getExpansionLineNumber}
 
 /* Define to getInstantiationLoc for older versions of clang */
-#cmakedefine getExpansionLoc
+#cmakedefine getExpansionLoc ${getExpansionLoc}
 
 /* Define to getLangOptions for older versions of clang */
-#cmakedefine getLangOpts
+#cmakedefine getLangOpts ${getLangOpts}
 
 /* Define to getFileLocWithOffset for older versions of clang */
-#cmakedefine getLocWithOffset
+#cmakedefine getLocWithOffset ${getLocWithOffset}
 
 /* Define to getResultType for older versions of clang */
-#cmakedefine getReturnType
+#cmakedefine getReturnType ${getReturnType}
 
 /* Define to getTypedefForAnonDecl for older versions of clang */
-#cmakedefine getTypedefNameForAnonDecl
+#cmakedefine getTypedefNameForAnonDecl ${getTypedefNameForAnonDecl}
 
 /* Define to InitializeBuiltins for older versions of clang */
-#cmakedefine initializeBuiltins
+#cmakedefine initializeBuiltins ${initializeBuiltins}

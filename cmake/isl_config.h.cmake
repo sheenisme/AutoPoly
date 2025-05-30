@@ -1,3 +1,5 @@
+/* isl_config.h.cmake - Configuration template for ISL */
+
 /* define if your compiler has __attribute__ */
 #cmakedefine HAVE___ATTRIBUTE__ /**/
 
