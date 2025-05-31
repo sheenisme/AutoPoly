@@ -2,27 +2,27 @@
 # Common Dependencies Configuration
 # ============================================================================
 
-# Configure compiler by clang and clang++
-set(CMAKE_C_COMPILER clang CACHE STRING "C compiler" FORCE)
-set(CMAKE_CXX_COMPILER clang++ CACHE STRING "C++ compiler" FORCE)
-message(STATUS "C compiler location: ${CMAKE_C_COMPILER}")
-message(STATUS "C++ compiler location: ${CMAKE_CXX_COMPILER}")
+# Project compiler settings and options for Debug build
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    # Compile information
+    message(STATUS "C compiler location: ${CMAKE_C_COMPILER}")
+    message(STATUS "C++ compiler location: ${CMAKE_CXX_COMPILER}")
 
-# Show compiler search path
-execute_process(
-    COMMAND ${CMAKE_CXX_COMPILER} -print-search-dirs
-    OUTPUT_VARIABLE SEARCH_DIRS
-)
-message(STATUS "Compiler search path:\n${SEARCH_DIRS}")
+    # Show compiler search path
+    execute_process(
+        COMMAND ${CMAKE_CXX_COMPILER} -print-search-dirs
+        OUTPUT_VARIABLE SEARCH_DIRS
+    )
+    message(STATUS "Compiler search path:\n${SEARCH_DIRS}")
 
-# Get CXX stdlib path
-execute_process(
-    COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libstdc++.so
-    OUTPUT_VARIABLE C_PLUS_STD_LIB_PATH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-message(STATUS "C++ library location: ${C_PLUS_STD_LIB_PATH}")
-
+    # Get CXX stdlib path
+    execute_process(
+        COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libstdc++.so
+        OUTPUT_VARIABLE C_PLUS_STD_LIB_PATH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    message(STATUS "C++ library location: ${C_PLUS_STD_LIB_PATH}")
+endif()
 
 # Detection of MPFR OpenMP and OpenCL
 if(USE_MPFR)

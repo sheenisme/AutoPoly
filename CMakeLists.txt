@@ -3,8 +3,8 @@ project(AutoStash LANGUAGES C CXX)
 
 # General options
 option(USE_MPFR   "Disable MPFR  support" OFF)
+option(USE_OPENCL "Disable OpenCL support" OFF)
 option(USE_OPENMP "Enable OpenMP support" ON)
-option(USE_OPENCL "Enable OpenCL support" ON)
 option(BUILD_PET_EXE "Enable Build PET executable" ON)
 
 # Set C/C++ standards
@@ -19,7 +19,7 @@ set(AUTOSTASH_BINARY_DIR ${PROJECT_BINARY_DIR})
 
 # Set default build type to Debug
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Default type of build" FORCE)
 endif()
 message(STATUS "CMake Build type: ${CMAKE_BUILD_TYPE}")
 
