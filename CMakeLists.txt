@@ -54,15 +54,6 @@ add_executable(AutoStash ${AUTOSTASH_SOURCES})
 set_target_properties(AutoStash PROPERTIES OUTPUT_NAME "autoStash")
 target_link_libraries(AutoStash ppcg)
 
-# Export include directories so other projects can use these libraries
-set(AutoStash_INCLUDE_DIRS
-    ${AUTOSTASH_SOURCE_DIR}
-    ${PPCG_DIR}
-    ${ISL_DIR}/include
-    ${PET_DIR}/include
-    CACHE INTERNAL "AutoStash include directories"
-)
-
 # Install AutoStash application
 install(TARGETS AutoStash
     RUNTIME DESTINATION bin
