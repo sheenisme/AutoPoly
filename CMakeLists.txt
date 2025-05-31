@@ -189,7 +189,7 @@ set(CMAKE_SKIP_BUILD_RPATH FALSE)
 # ============================================================================
 
 # Set PPCG directory (always required and built from source)
-set(PPCG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ppcg)
+set(PPCG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/ppcg)
 
 # Determine compiler characteristics
 # (These are referenced from Polly project configuration)
