@@ -624,10 +624,10 @@ if(HAVE_UNISTD_H)
 endif()
 
 # Create PET configuration header file
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/pet_config.h.cmake" "${CMAKE_BINARY_DIR}/include/pet/config.h")
+configure_file("${AUTOSTASH_SOURCE_DIR}/cmake/pet_config.h.cmake" "${AUTOSTASH_BINARY_DIR}/include/pet/config.h")
 
 # Include PET configuration directory
-include_directories(pet PRIVATE ${CMAKE_BINARY_DIR}/include/pet)
+include_directories(pet PRIVATE ${AUTOSTASH_BINARY_DIR}/include/pet)
 
 # Include PET headers directories
 include_directories(pet PRIVATE

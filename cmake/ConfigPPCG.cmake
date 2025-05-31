@@ -44,7 +44,7 @@ set(PPCG_SOURCES
     # Remove ppcg.c from the library to avoid main function conflict
     # ${PPCG_DIR}/ppcg.c
     # Add ppcg_wrapper.c file containing ppcg_main implementation
-    ${CMAKE_CURRENT_SOURCE_DIR}/lib/ppcg_wrapper.c
+    ${AUTOSTASH_SOURCE_DIR}/lib/ppcg_wrapper.c
 )
 
 # Build PPCG library

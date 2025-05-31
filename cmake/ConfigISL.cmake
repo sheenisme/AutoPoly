@@ -6,6 +6,16 @@
 
 message(STATUS "ISL source dir: ${ISL_DIR}")
 
+# Create gitversion.h file (required by ISL)
+execute_process(
+    COMMAND git describe --always 
+    WORKING_DIRECTORY ${ISL_DIR}
+    OUTPUT_VARIABLE ISL_GIT_HEAD_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+file(WRITE ${ISL_DIR}/gitversion.h "#define GIT_HEAD_ID \"${ISL_GIT_HEAD_VERSION}\"")
+message(STATUS "ISL version: ${ISL_GIT_HEAD_VERSION}")
+
 ########################################################################
 #    Check compiler characteristics to set ISL compilation options     #
 #    (Referenced from Polly project configuration)                     #
@@ -102,24 +112,14 @@ elseif (HAVE_SYS_INTTYPES_H)
 else()
     message(FATAL_ERROR "No stdint.h or compatible found")
 endif ()
-file(WRITE "${CMAKE_BINARY_DIR}/include/isl/stdint.h.tmp"
+file(WRITE "${AUTOSTASH_BINARY_DIR}/include/isl/stdint.h.tmp"
     "${INCLUDE_STDINT_H}\n")
-configure_file("${CMAKE_BINARY_DIR}/include/isl/stdint.h.tmp"
-    "${CMAKE_BINARY_DIR}/include/isl/isl/stdint.h" COPYONLY)
+configure_file("${AUTOSTASH_BINARY_DIR}/include/isl/stdint.h.tmp"
+    "${AUTOSTASH_BINARY_DIR}/include/isl/isl/stdint.h" COPYONLY)
 
 # Create ISL configuration header file
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/isl_config.h.cmake" "${CMAKE_BINARY_DIR}/include/isl/isl_config.h")
-include_directories(isl PRIVATE ${CMAKE_BINARY_DIR}/include/isl)
-
-# Create gitversion.h file (required by ISL)
-execute_process(
-    COMMAND git describe --always 
-    WORKING_DIRECTORY ${ISL_DIR}
-    OUTPUT_VARIABLE ISL_GIT_HEAD_VERSION
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-file(WRITE ${ISL_DIR}/gitversion.h "#define GIT_HEAD_ID \"${ISL_GIT_HEAD_VERSION}\"")
-message(STATUS "ISL version: ${ISL_GIT_HEAD_VERSION}")
+configure_file("${AUTOSTASH_SOURCE_DIR}/cmake/isl_config.h.cmake" "${AUTOSTASH_BINARY_DIR}/include/isl/isl_config.h")
+include_directories(isl PRIVATE ${AUTOSTASH_BINARY_DIR}/include/isl)
 
 # Include ISL headers directories
 include_directories(isl PRIVATE
