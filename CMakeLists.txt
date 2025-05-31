@@ -344,11 +344,10 @@ if(BUILD_ISL)
     file(WRITE "${CMAKE_BINARY_DIR}/include/isl/stdint.h.tmp"
         "${INCLUDE_STDINT_H}\n")
     configure_file("${CMAKE_BINARY_DIR}/include/isl/stdint.h.tmp"
-        "${CMAKE_BINARY_DIR}/include/isl/stdint.h" COPYONLY)
+        "${CMAKE_BINARY_DIR}/include/isl/isl/stdint.h" COPYONLY)
     
     # Create ISL configuration header file
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/isl_config.h.cmake" "${CMAKE_BINARY_DIR}/include/isl_config.h")
-    include_directories(isl PUBLIC ${CMAKE_BINARY_DIR}/include)
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/isl_config.h.cmake" "${CMAKE_BINARY_DIR}/include/isl/isl_config.h")
 
     # Create gitversion.h file (required by ISL)
     execute_process(
@@ -357,8 +356,11 @@ if(BUILD_ISL)
         OUTPUT_VARIABLE ISL_GIT_HEAD_VERSION
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    file(WRITE ${ISL_DIR}/gitversion.h "#define GIT_HEAD_ID \"${ISL_GIT_HEAD_VERSION}\"")
+    file(WRITE ${CMAKE_BINARY_DIR}/include/isl/gitversion.h "#define GIT_HEAD_ID \"${ISL_GIT_HEAD_VERSION}\"")
     message(STATUS "ISL version: ${ISL_GIT_HEAD_VERSION}")
+
+    # Set ISL Personal include directory
+    include_directories(isl PRIVATE ${CMAKE_BINARY_DIR}/include/isl)
 
     # Include ISL headers directories
     include_directories(isl PUBLIC
@@ -537,7 +539,7 @@ if(BUILD_PET)
     if(NOT PET_GIT_HEAD_VERSION)
         set(PET_GIT_HEAD_VERSION "unknown")
     endif()
-    file(WRITE ${PET_DIR}/gitversion.h "#define GIT_HEAD_ID \"${PET_GIT_HEAD_VERSION}\"")
+    file(WRITE ${CMAKE_BINARY_DIR}/include/pet/gitversion.h "#define GIT_HEAD_ID \"${PET_GIT_HEAD_VERSION}\"")
 
     # Set PET version
     string(REGEX REPLACE "^pet-([0-9.]+).*" "\\1" PET_VERSION "${PET_GIT_HEAD_VERSION}")
@@ -1338,10 +1340,14 @@ execute_process(
     OUTPUT_VARIABLE PPCG_GIT_HEAD_VERSION
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-file(WRITE ${PPCG_DIR}/gitversion.h "#define GIT_HEAD_ID \"${PPCG_GIT_HEAD_VERSION}\"")
+file(WRITE ${CMAKE_BINARY_DIR}/include/ppcg/gitversion.h "#define GIT_HEAD_ID \"${PPCG_GIT_HEAD_VERSION}\"")
 message(STATUS "PPCG version: ${PPCG_GIT_HEAD_VERSION}")  
 
-include_directories(
+# Include private header for PPCG
+include_directories(ppcg PRIVATE ${CMAKE_BINARY_DIR}/include/ppcg)
+
+# Include public directories for PPCG
+include_directories(ppcg PUBLIC
     ${PPCG_DIR}
     ${ISL_DIR}/include
     ${PET_DIR}/include
@@ -1438,6 +1444,19 @@ install(FILES ${PPCG_HEADERS}
 # to perform code transformations and optimizations.
 
 message(STATUS "Configuring main AutoStash application")
+
+# Create gitversion.h file for AutoStash
+execute_process(
+    COMMAND git describe --always
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    OUTPUT_VARIABLE _AUTOSTASH_GIT_HEAD_VERSION_
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+file(WRITE ${CMAKE_BINARY_DIR}/include/gitversion.h "#define GIT_HEAD_ID \"${_AUTOSTASH_GIT_HEAD_VERSION_}\"")
+message(STATUS "AutoStash version: ${_AUTOSTASH_GIT_HEAD_VERSION_}")
+
+# Include private header for AutoStash
+include_directories(AutoStash PRIVATE ${CMAKE_BINARY_DIR}/include/)
 
 # Build the main application
 add_executable(AutoStash main.cpp)
