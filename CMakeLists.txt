@@ -344,11 +344,11 @@ if(BUILD_ISL)
     file(WRITE "${CMAKE_BINARY_DIR}/include/isl/stdint.h.tmp"
         "${INCLUDE_STDINT_H}\n")
     configure_file("${CMAKE_BINARY_DIR}/include/isl/stdint.h.tmp"
-        "${CMAKE_BINARY_DIR}/include/isl/stdint.h" COPYONLY)
+        "${CMAKE_BINARY_DIR}/include/isl/isl/stdint.h" COPYONLY)
     
     # Create ISL configuration header file
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/isl_config.h.cmake" "${CMAKE_BINARY_DIR}/include/isl_config.h")
-    include_directories(isl PUBLIC ${CMAKE_BINARY_DIR}/include)
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/isl_config.h.cmake" "${CMAKE_BINARY_DIR}/include/isl/isl_config.h")
+    include_directories(isl PRIVATE ${CMAKE_BINARY_DIR}/include/isl)
 
     # Create gitversion.h file (required by ISL)
     execute_process(
@@ -361,7 +361,7 @@ if(BUILD_ISL)
     message(STATUS "ISL version: ${ISL_GIT_HEAD_VERSION}")
 
     # Include ISL headers directories
-    include_directories(isl PUBLIC
+    include_directories(isl PRIVATE
         ${ISL_DIR}
         ${ISL_DIR}/imath
         ${ISL_DIR}/include
@@ -374,7 +374,7 @@ else()
     message(STATUS "Using external ISL from: ${ISL_DIR}")
 
     # Include ISL headers
-    include_directories(isl PUBLIC
+    include_directories(isl PRIVATE
         ${ISL_DIR}
         ${ISL_DIR}/imath
         ${ISL_DIR}/include
@@ -513,7 +513,11 @@ else()
     message(STATUS "Found external ISL library: ${ISL_LIBRARY}")
 
     # Add include directories for external ISL
-    include_directories(${ISL_DIR}/include)
+    include_directories(isl PRIVATE
+        ${ISL_DIR}
+        ${ISL_DIR}/imath
+        ${ISL_DIR}/include
+    )
 endif()
 
 
@@ -1341,7 +1345,7 @@ execute_process(
 file(WRITE ${PPCG_DIR}/gitversion.h "#define GIT_HEAD_ID \"${PPCG_GIT_HEAD_VERSION}\"")
 message(STATUS "PPCG version: ${PPCG_GIT_HEAD_VERSION}")  
 
-include_directories(
+include_directories(ppcg PRIVATE
     ${PPCG_DIR}
     ${ISL_DIR}/include
     ${PET_DIR}/include
@@ -1368,7 +1372,7 @@ set(PPCG_SOURCES
     # Remove ppcg.c from the library to avoid main function conflict
     # ${PPCG_DIR}/ppcg.c
     # Add ppcg_wrapper.c file containing ppcg_main implementation
-    ${CMAKE_CURRENT_SOURCE_DIR}/ppcg_wrapper.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/ppcg_wrapper.c
 )
 
 # Build PPCG library
@@ -1439,8 +1443,17 @@ install(FILES ${PPCG_HEADERS}
 
 message(STATUS "Configuring main AutoStash application")
 
+set(AUTOSTASH_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/main.cpp
+)
+include_directories(AutoStash PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${PPCG_DIR}
+    ${ISL_DIR}/include
+    ${PET_DIR}/include
+)
 # Build the main application
-add_executable(AutoStash main.cpp)
+add_executable(AutoStash ${AUTOSTASH_SOURCES})
 set_target_properties(AutoStash PROPERTIES OUTPUT_NAME "autoStash")
 target_link_libraries(AutoStash ppcg)
 

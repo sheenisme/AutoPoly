@@ -2,13 +2,7 @@
 #include <string>
 #include <cstdio>
 
-// add ppcg wrapper
-extern "C" {
-#include "ppcg.h"
-#include "ppcg_options.h"
-
-extern int ppcg_main(int argc, char *argv[]);
-}
+#include "ppcg_wrapper.h"
 
 int main(int argc, char *argv[]) {
     ppcg_main(argc, argv);
