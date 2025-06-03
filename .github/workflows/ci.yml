@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      LLVM_BUILD_DIR: ${{ github.workspace }}/llvm-build
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build build-essential git libgmp-dev
+
+      - name: Cache LLVM build
+        uses: actions/cache@v4
+        with:
+          path: llvm-build
+          key: ${{ runner.os }}-llvm-build-${{ hashFiles('third_party/llvm-project/**') }}
+
+      - name: Build LLVM/Clang/MLIR
+        run: |
+          bash scripts/llvm-build.sh
+
+      - name: Build autoStash
+        run: |
+          bash scripts/build.sh
+
+      - name: Test autoStash binary exists
+        run: |
+          test -f build/bin/autoStash
+
+      - name: Show build output
+        run: |
+          ls -lh build/bin/ 
