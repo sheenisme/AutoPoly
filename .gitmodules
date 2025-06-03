@@ -1,3 +1,6 @@
 [submodule "third_party/ppcg"]
 	path = third_party/ppcg
 	url = git://repo.or.cz/ppcg.git
+[submodule "third_party/llvm-project"]
+	path = third_party/llvm-project
+	url = git@github.com:llvm/llvm-project.git
