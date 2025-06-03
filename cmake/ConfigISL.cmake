@@ -228,8 +228,18 @@ if(MPFR_FOUND)
     target_link_libraries(isl ${MPFR_LIBRARIES})
 endif()
 
-# Add debug options to ISL for better error diagnosis
-target_compile_options(isl PRIVATE -g)
+# Set compile options to ISL
+target_compile_options(isl PRIVATE -g
+    -Wno-sign-compare
+    -Wno-cast-qual
+    -Wno-discarded-qualifiers
+    -Wno-implicit-fallthrough
+    -Wno-unused-function
+    -Wno-unused-variable
+    -Wno-unused-but-set-variable
+    -Wno-type-limits
+    -Wno-return-type
+)
 
 # Set installation rules for ISL
 install(TARGETS isl

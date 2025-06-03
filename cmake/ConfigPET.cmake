@@ -692,6 +692,31 @@ if(Clang_FOUND)
     target_link_libraries(pet ${CLANG_LIBRARIES})
 endif()
 
+# Set compile options to PET
+target_compile_options(pet PRIVATE -g
+    $<$<COMPILE_LANGUAGE:C>:
+        -Wno-sign-compare
+        -Wno-cast-qual
+        -Wno-discarded-qualifiers
+        -Wno-implicit-fallthrough
+        -Wno-unused-function
+        -Wno-unused-variable
+        -Wno-unused-but-set-variable
+        -Wno-type-limits
+        -Wno-return-type
+    >
+    $<$<COMPILE_LANGUAGE:CXX>:
+        -Wno-sign-compare
+        -Wno-cast-qual
+        -Wno-implicit-fallthrough
+        -Wno-unused-function
+        -Wno-unused-variable
+        -Wno-unused-but-set-variable
+        -Wno-suggest-override
+        -Wno-return-type
+    >
+)
+
 # Set installation rules for PET
 install(TARGETS pet
     RUNTIME DESTINATION bin
@@ -743,6 +768,31 @@ if(BUILD_PET_EXE)
     if(Clang_FOUND)
         target_link_libraries(pet_exe PRIVATE ${CLANG_LIBRARIES})
     endif()
+
+    # Set compile options to the binary of PET
+    target_compile_options(pet_exe PRIVATE -g
+        $<$<COMPILE_LANGUAGE:C>:
+            -Wno-sign-compare
+            -Wno-cast-qual
+            -Wno-discarded-qualifiers
+            -Wno-implicit-fallthrough
+            -Wno-unused-function
+            -Wno-unused-variable
+            -Wno-unused-but-set-variable
+            -Wno-type-limits
+            -Wno-return-type
+        >
+        $<$<COMPILE_LANGUAGE:CXX>:
+            -Wno-sign-compare
+            -Wno-cast-qual
+            -Wno-implicit-fallthrough
+            -Wno-unused-function
+            -Wno-unused-variable
+            -Wno-unused-but-set-variable
+            -Wno-suggest-override
+            -Wno-return-type
+        >
+    )
 
     # Set installation rules for PET_EXECUTABLE
     install(TARGETS pet_exe

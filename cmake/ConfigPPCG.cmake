@@ -63,6 +63,20 @@ if(OpenCL_FOUND)
     target_link_libraries(ppcg ${OpenCL_LIBRARIES})
 endif()
 
+# Set compile options to PPCG
+target_compile_options(ppcg PRIVATE
+    -Wno-sign-compare
+    -Wno-cast-qual
+    -Wno-discarded-qualifiers
+    -Wno-implicit-fallthrough
+    -Wno-unused-function
+    -Wno-unused-variable
+    -Wno-unused-but-set-variable
+    -Wno-type-limits
+    -Wno-return-type
+    -Wno-extra
+)
+
 # Build PPCG executable
 add_executable(ppcg_exe ${PPCG_DIR}/ppcg.c)
 set_target_properties(ppcg_exe PROPERTIES OUTPUT_NAME "ppcg")
@@ -79,6 +93,20 @@ endif()
 if(OpenCL_FOUND)
     target_link_libraries(ppcg_exe PRIVATE ${OpenCL_LIBRARIES})
 endif()
+
+# Set compile options to the binary of PPCG
+target_compile_options(ppcg_exe PRIVATE
+    -Wno-sign-compare
+    -Wno-cast-qual
+    -Wno-discarded-qualifiers
+    -Wno-implicit-fallthrough
+    -Wno-unused-function
+    -Wno-unused-variable
+    -Wno-unused-but-set-variable
+    -Wno-type-limits
+    -Wno-return-type
+    -Wno-extra
+)
 
 # Set installation rules for PPCG
 install(TARGETS ppcg ppcg_exe
