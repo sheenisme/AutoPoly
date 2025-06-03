@@ -1,114 +1,136 @@
-# AutoStash工程
+[English](README.md) | [中文](README-zh.md)
 
-这个工程将PPCG及其依赖的ISL、PET等库配置为第三方依赖库，并编译成静态库，以便在其他项目中使用。
+---
 
-## 依赖项
+<h1 align="center">autoStash</h1>
 
-- PPCG
-- CMake (>= 3.10)
-- GMP库
-- MPFR库
-- C++17兼容的编译器
-- OpenMP (可选)
-- OpenCL (可选)
+<p align="center">
+  <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build Status" />
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License" />
+  <img src="https://img.shields.io/badge/stars-★--" alt="GitHub Stars" />
+</p>
 
-### 安装依赖项
+---
 
-在Ubuntu/Debian系统上：
-```bash
-sudo apt-get install libgmp-dev libmpfr-dev
+> **autoStash** is a C/C++ project for polyhedral-based automatic parallelization and code generation, integrating PPCG, PET, ISL, and LLVM/Clang/MLIR.
+
+---
+
+## Table of Contents
+- [Features](#features)
+- [Dependencies](#dependencies)
+- [Third-party Libraries](#third-party-libraries)
+- [Getting Started](#getting-started)
+- [Directory Structure](#directory-structure)
+- [Usage](#usage)
+- [Troubleshooting](#troubleshooting)
+- [References & Credits](#references--credits)
+- [License](#license)
+
+---
+
+## Features
+- **Automatic extraction** of polyhedral regions from C code
+- **Code generation** for CUDA and OpenCL
+- **LLVM/Clang/MLIR integration** for modern C/C++
+- **Out-of-tree build** for easy integration and maintenance
+
+---
+
+## Dependencies
+| Name    | Version/Note                |
+|---------|-----------------------------|
+| CMake   | >= 3.20                     |
+| GCC/Clang | C/C++17 support           |
+| make    |                             |
+| git     |                             |
+| ninja   |                             |
+| GMP     | GNU Multiple Precision      |
+| LLVM/Clang/MLIR | Built from source   |
+| MPFR, OpenMP, OpenCL | Optional       |
+
+---
+
+## Third-party Libraries
+- [PPCG](https://repo.or.cz/ppcg.git): Polyhedral Parallel Code Generator
+- [PET](https://repo.or.cz/pet.git): Polyhedral Extraction Tool
+- [ISL](https://repo.or.cz/isl.git): Integer Set Library
+- [LLVM Project](https://github.com/llvm/llvm-project): LLVM, Clang, MLIR
+
+---
+
+## Getting Started
+
+> **Note:** Building LLVM/Clang/MLIR may take a long time and require significant disk space and memory.
+
+### 1. Clone the repository
+```sh
+git clone --recursive <repo_url>
+cd autoStash
+```
+If you forgot `--recursive`:
+```sh
+git submodule update --init --recursive
 ```
 
-在CentOS/RHEL系统上：
-```bash
-sudo yum install gmp-devel mpfr-devel
+### 2. Build LLVM/Clang/MLIR
+```sh
+bash scripts/llvm-build.sh
 ```
 
-在macOS上（使用Homebrew）：
-```bash
-brew install gmp mpfr
+### 3. Build autoStash
+```sh
+bash scripts/build.sh
+```
+- The main binary will be generated in `build/bin/autoStash`.
+
+---
+
+## Directory Structure
+```text
+├── CMakeLists.txt           # Main CMake configuration
+├── cmake/                   # Custom CMake modules for dependencies
+├── include/                 # Project headers
+├── lib/                     # Project source files
+├── scripts/                 # Build scripts
+├── third_party/             # Submodules: ppcg, llvm-project, etc.
+│   ├── ppcg/                # PPCG source and dependencies (ISL, PET)
+│   └── llvm-project/        # LLVM, Clang, MLIR sources
+├── build/                   # Build output (created after build)
 ```
 
-如果使用Conda环境：
-```bash
-conda install -c conda-forge gmp mpfr
+---
+
+## Usage
+The main entry point is the `autoStash` binary. For example:
+```sh
+./build/bin/autoStash --help
 ```
+You can use PPCG command-line options to process C files and generate CUDA/OpenCL code. See PPCG documentation for details.
 
-## 目录结构
+---
 
-```
-AutoStash/
-├── CMakeLists.txt                    # 主CMake配置文件
-├── main.cpp                          # 示例应用程序
-└── ppcg/                         # PPCG及其依赖库
-    ├── isl/                          # ISL库 (子模块)
-    │   └── imath/                    # IMath库 (ISL子模块)
-    └── pet/                          # PET库 (子模块)
-```
+## Troubleshooting
+> **Common issues and solutions:**
 
-## 如何构建
+| Problem | Solution |
+|---------|----------|
+| LLVM/Clang/MLIR build fails | Ensure enough disk space and memory. Use recent CMake and Ninja. |
+| Missing dependencies | Install with: <br> `sudo apt install cmake ninja-build git build-essential libgmp-dev` |
+| Submodule errors | `git submodule update --init --recursive` |
+| Linker errors | Ensure all dependencies are built and paths are correct. |
 
-1. 克隆仓库并初始化子模块
+---
 
-```bash
-git clone <仓库地址>
-cd AutoStash
-cd ppcg
-./get_submodules.sh
-cd ..
-```
+## References & Credits
+- [PPCG](https://repo.or.cz/ppcg.git)
+- [PET](https://repo.or.cz/pet.git)
+- [ISL](https://repo.or.cz/isl.git)
+- [LLVM Project](https://github.com/llvm/llvm-project)
 
-2. 创建构建目录并编译
+---
 
-```bash
-mkdir build
-cd build
-cmake ..
-make -j$(nproc)
-```
+## License
+This project is licensed under the Apache License 2.0 with LLVM Exceptions (SPDX: Apache-2.0 WITH LLVM-exception).
 
-3. 安装库（可选）
-
-```bash
-sudo make install
-```
-
-## 使用示例
-
-示例程序展示了如何使用PPCG库来优化代码：
-
-```bash
-./AutoStash input.c output.c
-```
-
-## 配置选项
-
-CMake配置中提供以下选项：
-
-- `BUILD_SHARED_LIBS`: 是否构建共享库（默认：OFF）
-- `USE_OPENMP`: 启用OpenMP支持（默认：ON）
-- `USE_OPENCL`: 启用OpenCL支持（默认：OFF）
-
-可以通过以下方式修改：
-
-```bash
-cmake -DBUILD_SHARED_LIBS=ON -DUSE_OPENCL=ON ..
-```
-
-如果CMake找不到GMP或MPFR库，可以手动指定它们的位置：
-
-```bash
-cmake -DGMP_LIBRARIES=/path/to/libgmp.so -DGMP_INCLUDE_DIRS=/path/to/gmp/include -DMPFR_LIBRARIES=/path/to/libmpfr.so -DMPFR_INCLUDE_DIRS=/path/to/mpfr/include ..
-```
-
-对于conda环境，可以使用：
-
-```bash
-cmake -DGMP_LIBRARIES=$CONDA_PREFIX/lib/libgmp.so -DGMP_INCLUDE_DIRS=$CONDA_PREFIX/include -DMPFR_LIBRARIES=$CONDA_PREFIX/lib/libmpfr.so -DMPFR_INCLUDE_DIRS=$CONDA_PREFIX/include ..
-```
-
-## 注意事项
-
-- 与原始的PPCG库相比，此工程使用CMake来构建项目，而不是Autotools
-- 如果遇到编译错误，可能需要检查子模块是否与PPCG版本匹配
-- 本项目不会在第三方库中创建新文件，仅通过CMake配置来构建它们 
+Third-party submodules (such as PPCG, PET, ISL, LLVM) are included for convenience and are licensed under their respective open source licenses. Please refer to each submodule's directory for details. 
