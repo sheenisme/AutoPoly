@@ -76,60 +76,6 @@ else()
     message(STATUS "GMP not found, USE_GMP_FOR_MP=${USE_GMP_FOR_MP}")
 endif()
 
-# Add LLVM/Clang detection
-find_package(LLVM REQUIRED CONFIG)
-if(LLVM_FOUND)
-    message(STATUS "Found LLVM: ${LLVM_FOUND}")
-    message(STATUS "LLVM include directories: ${LLVM_INCLUDE_DIRS}")
-else()
-    message(STATUS "LLVM not found")
-endif()
-find_package(Clang REQUIRED CONFIG)
-if(Clang_FOUND)
-    message(STATUS "Found Clang: ${Clang_FOUND}")
-    message(STATUS "Clang include directories: ${CLANG_INCLUDE_DIRS}")
-else()
-    message(STATUS "Clang not found")
-endif()
-
-if(LLVM_FOUND)
-    set(LLVM_REQUIRED_LIBS
-        LLVMSupport
-        LLVMCore
-        LLVMBinaryFormat
-        LLVMRemarks
-        LLVMBitstreamReader
-        LLVMDemangle
-        LLVMTargetParser
-        LLVMTextAPI
-    )
-    list(APPEND CMAKE_REQUIRED_INCLUDES ${LLVM_INCLUDE_DIRS})
-    list(APPEND CMAKE_REQUIRED_LIBRARIES ${LLVM_REQUIRED_LIBS})
-    message(STATUS "Appended LLVM include: ${LLVM_INCLUDE_DIRS}")
-    message(STATUS "Appended LLVM libraries: ${LLVM_REQUIRED_LIBS}")
-endif()
-
-if(Clang_FOUND)
-    set(CLANG_REQUIRED_LIBS
-        clangBasic
-        clangLex
-        clangFrontend
-        clangSerialization
-        clangParse 
-        clangSema
-        clangAnalysis
-        clangAST
-        clangEdit
-        clangASTMatchers
-        clangDriver
-        clangSupport
-    )
-    list(APPEND CMAKE_REQUIRED_INCLUDES ${CLANG_INCLUDE_DIRS})
-    list(APPEND CMAKE_REQUIRED_LIBRARIES ${CLANG_REQUIRED_LIBS})
-    message(STATUS "Appended Clang include: ${CLANG_INCLUDE_DIRS}")
-    message(STATUS "Appended Clang libraries: ${CLANG_REQUIRED_LIBS}")
-endif()
-
 # Set output directories for binaries and libraries
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${AUTOSTASH_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${AUTOSTASH_BINARY_DIR}/lib)

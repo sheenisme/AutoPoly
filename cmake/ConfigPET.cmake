@@ -31,14 +31,9 @@ message(STATUS "PET version: ${PET_VERSION}")
 ########################################################################
 message(STATUS "Checking Clang features for PET compatibility")
 
-# Set up compiler flags for Clang detection
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -Wno-error")
-endif()
-
-# Find LLVM and Clang prefix
-if(LLVM_FOUND)
-    set(CLANG_PREFIX ${LLVM_INSTALL_PREFIX})
+# Set Clang prefix
+if(NOT "${PET_CLANG_PREFIX}" STREQUAL "")
+    set(CLANG_PREFIX "${PET_CLANG_PREFIX}")
 else()
     # Try to find clang executable and derive prefix
     find_program(CLANG_EXECUTABLE clang)
@@ -635,22 +630,6 @@ include_directories(pet PRIVATE
     ${ISL_DIR}/include
 )
 
-# Add Clang dependency libraries
-set(CLANG_REQUIRED_LIBS
-    clangFrontend
-    clangSerialization
-    clangParse 
-    clangSema
-    clangAnalysis
-    clangAST
-    clangLex
-    clangEdit
-    clangASTMatchers
-    clangDriver
-    clangBasic
-    clangSupport
-)
-
 message(STATUS "PET Clang compatibility checks completed")
 
 # Complete PET source file list (according to Makefile.am)
@@ -699,7 +678,7 @@ if(Clang_FOUND)
 endif()
 
 # Add required libraries for PET (TODO: fix errors when clang not found)
-target_link_libraries(pet isl ${CLANG_REQUIRED_LIBS})
+target_link_libraries(pet isl ${PET_REQUIRED_CLANG_LIBS})
 if(GMP_FOUND)
     target_link_libraries(pet ${GMP_LIBRARIES})
 endif()
@@ -749,7 +728,7 @@ if(BUILD_PET_EXE)
     target_link_libraries(pet_exe PRIVATE
         pet
         isl
-        ${CLANG_REQUIRED_LIBS}
+        ${PET_REQUIRED_CLANG_LIBS}
         ${YAML_LIBRARIES}
     )
     if(GMP_FOUND)
