@@ -248,3 +248,6 @@ install(TARGETS isl
     ARCHIVE DESTINATION lib
 )
 install(DIRECTORY ${ISL_DIR}/include/ DESTINATION include/)
+
+# Set ISL include directories
+set(ISL_INCLUDE_DIRS ${ISL_DIR}/include)

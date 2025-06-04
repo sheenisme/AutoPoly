@@ -1,136 +1,237 @@
-[English](README.md) | [中文](README-zh.md)
+# AutoPoly: 基于MLIR的自动多面体调度框架
 
----
+AutoPoly是一个构建在MLIR之上的综合性多面体调度框架，通过多面体模型变换提供自动循环优化。它采用三级分离架构，实现目标检测、调度策略选择和调度算法应用的自动化。
 
-<h1 align="center">AutoPoly</h1>
+## 特性
 
-<p align="center">
-  <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build Status" />
-  <img src="https://img.shields.io/badge/license-MIT-blue" alt="License" />
-  <img src="https://img.shields.io/badge/stars-★--" alt="GitHub Stars" />
-</p>
+### 核心功能
+- **多面体模型提取**: 使用ISL将MLIR仿射方言操作转换为多面体模型
+- **依赖分析**: 对数据、内存和控制依赖进行全面分析
+- **三级分离架构**: 自动目标检测 → 策略选择 → 算法应用
+- **多目标支持**: CPU、GPU、OpenCL、FPGA、CGRA、NPU、DPU、PIM
+- **高级变换**: 分块、融合、倾斜、并行化、向量化
 
----
+### 支持的变换
+- **循环分块**: 基于目标内存层次结构的自动分块大小选择
+- **循环融合**: 智能融合以改善数据局部性
+- **循环并行化**: 基于依赖分析的自动并行循环生成
+- **循环倾斜**: 依赖感知的倾斜变换
+- **向量化**: 向量/SIMD优化提示
+- **内存优化**: 数组私有化和内存合并
 
-> **AutoPoly** 是一个基于多面体模型的 C/C++ 自动并行化与代码生成工具，集成了 PPCG、PET、ISL 及 LLVM/Clang/MLIR。
+### 目标平台支持
+- **CPU**: 具有缓存层次优化的多核处理器
+- **GPU**: CUDA兼容的图形处理器
+- **OpenCL**: OpenCL兼容设备
+- **FPGA**: 现场可编程门阵列
+- **CGRA**: 粗粒度可重构阵列
+- **NPU**: 神经处理单元
+- **DPU**: 深度处理单元
+- **PIM**: 存内计算架构
 
----
+## 架构设计
 
-## 目录
-- [主要特性](#主要特性)
-- [依赖环境](#依赖环境)
-- [第三方库](#第三方库)
-- [快速开始](#快速开始)
-- [目录结构说明](#目录结构说明)
-- [使用方法](#使用方法)
-- [常见问题](#常见问题)
-- [参考与致谢](#参考与致谢)
-- [许可证](#许可证)
+AutoPoly实现了三级分离架构：
 
----
-
-## 主要特性
-- **自动提取** C 代码中的多面体区域（scop）
-- **支持 CUDA 和 OpenCL** 代码生成
-- **集成 LLVM/Clang/MLIR**，支持现代 C/C++ 语法
-- **完全 out-of-tree 构建**，便于维护和集成
-
----
-
-## 依赖环境
-| 名称        | 版本/说明                |
-|-------------|--------------------------|
-| CMake       | >= 3.20                  |
-| GCC/Clang   | 支持 C/C++17             |
-| make        |                          |
-| git         |                          |
-| ninja       |                          |
-| GMP         | GNU 多精度运算库         |
-| LLVM/Clang/MLIR | 源码自动构建         |
-| MPFR、OpenMP、OpenCL | 可选           |
-
----
-
-## 第三方库
-- [PPCG](https://repo.or.cz/ppcg.git)：多面体并行代码生成器
-- [PET](https://repo.or.cz/pet.git)：多面体提取工具
-- [ISL](https://repo.or.cz/isl.git)：整数集合库
-- [LLVM Project](https://github.com/llvm/llvm-project)：LLVM、Clang、MLIR
-
----
-
-## 快速开始
-
-> **注意：** LLVM/Clang/MLIR 的编译耗时较长，且需要较多磁盘空间和内存。
-
-### 1. 克隆仓库
-```sh
-git clone --recursive <repo_url>
-cd AutoPoly
 ```
-如果忘记加 `--recursive`：
-```sh
-git submodule update --init --recursive
+┌─────────────────┐    ┌──────────────────┐     ┌─────────────────┐
+│  目标           │    │  调度策略         │     │  调度算法        │
+│  检测           │───>│  选择             │───> │                 │
+│                 │    │                  │     │                 │
+└─────────────────┘    └──────────────────┘     └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐     ┌─────────────────┐
+│ 硬件特征        │     │  目标特定优化     │     │ ISL, Feautrier, │
+│ 和能力          │     │  参数            │     │ PLUTO, PPCG     │
+└─────────────────┘    └──────────────────┘     └─────────────────┘
 ```
 
-### 2. 编译 LLVM/Clang/MLIR
-```sh
-bash scripts/llvm-build.sh
+### 组件介绍
+
+1. **目标检测模块** (`lib/Target/`)
+   - 自动硬件检测和特征描述
+   - 内存层次分析
+   - 计算能力评估
+
+2. **调度策略管理器** (`lib/Scheduling/`)
+   - 目标特定优化策略选择
+   - 基于硬件特征的参数调优
+   - 算法选择逻辑
+
+3. **多面体分析** (`lib/Analysis/`)
+   - MLIR仿射到多面体模型转换
+   - 全面的依赖分析
+   - 内存访问模式分析
+
+4. **调度变换** (`lib/Transform/`)
+   - 多面体变换的实现
+   - GPU优化的PPCG集成
+   - 基于ISL的调度算法
+
+5. **代码生成** (`lib/CodeGen/`)
+   - 多面体调度到MLIR仿射转换
+   - 并行循环生成
+   - 内存访问优化
+
+6. **MLIR遍历** (`lib/Passes/`)
+   - 与MLIR遍历基础设施集成
+   - 流水线管理
+   - 遍历配置和编排
+
+## 构建说明
+
+### 前置条件
+- LLVM/MLIR (版本 18+)
+- ISL (整数集合库)
+- PPCG (多面体并行代码生成器)
+- CMake 3.20+
+- C++17兼容编译器
+
+### 构建步骤
+
+1. **克隆仓库**:
+   ```bash
+   git clone https://github.com/sheenisme/AutoPoly.git
+   cd AutoPoly
+   git submodule update --init --recursive
+   ```
+
+2. **设置LLVM/MLIR构建目录**:
+   ```bash
+   export LLVM_BUILD_DIR=/path/to/your/llvm-build
+   ```
+
+3. **配置和构建**:
+   ```bash
+   mkdir build && cd build
+   cmake -G Ninja .. \
+     -DCMAKE_BUILD_TYPE=Release \
+     -DLLVM_BUILD_DIR=${LLVM_BUILD_DIR}
+   ninja
+   ```
+
+4. **运行测试**:
+   ```bash
+   ninja check-autopoly
+   ```
+
+## 使用
+
+### 命令行工具
+
+```bash
+# 基本用法
+./autopoly-mlir-opt input.mlir -autopoly -o output.mlir
+
+# 指定目标
+./autopoly-mlir-opt input.mlir -autopoly -target=gpu -o output.mlir
+
+# 启用特定优化
+./autopoly-mlir-opt input.mlir -autopoly -enable-tiling -enable-fusion -o output.mlir
 ```
 
-### 3. 编译 AutoPoly 主工程
-```sh
-bash scripts/build.sh
-```
-- 主程序会生成在 `build/bin/AutoPoly`。
+### MLIR Pass 集成
 
----
+```cpp
+#include "AutoPoly/Transform/AutoPolyPass.h"
 
-## 目录结构说明
-```text
-├── CMakeLists.txt           # CMake 主配置文件
-├── cmake/                   # 依赖相关的 CMake 模块
-├── include/                 # 项目头文件
-├── lib/                     # 项目源代码
-├── scripts/                 # 构建脚本
-├── third_party/             # 子模块：ppcg、llvm-project 等
-│   ├── ppcg/                # PPCG 及其依赖（ISL、PET）
-│   └── llvm-project/        # LLVM、Clang、MLIR 源码
-├── build/                   # 构建输出目录（编译后生成）
+// 注册 pass
+mlir::PassManager pm(context);
+pm.addPass(autopoly::createAutoPolyPass());
 ```
 
----
+### API 使用
 
-## 使用方法
-主程序入口为 `AutoPoly`，例如：
-```sh
-./build/bin/AutoPoly --help
+```cpp
+#include "AutoPoly/Scheduling/SchedulingFramework.h"
+
+// 创建框架
+autopoly::SchedulingFramework scheduler(context);
+
+// 执行调度
+auto newSchedule = scheduler.performScheduling(
+    originalSchedule, dependences, autopoly::TargetType::GPU);
 ```
-你可以使用 PPCG 的命令行参数处理 C 文件并生成 CUDA/OpenCL 代码，具体参数和用法请参考 PPCG 官方文档。
 
----
+## 示例
 
-## 常见问题
-> **常见问题与解决方法：**
+### 矩阵乘法优化
 
-| 问题 | 解决方法 |
-|------|----------|
-| LLVM/Clang/MLIR 构建失败 | 请确保磁盘空间和内存充足，CMake 和 Ninja 版本较新。 |
-| 依赖缺失 | 使用如下命令安装：<br> `sudo apt install cmake ninja-build git build-essential libgmp-dev` |
-| 子模块错误 | `git submodule update --init --recursive` |
-| 链接错误 | 请确保所有依赖均已正确编译，路径设置无误。 |
+输入:
+```mlir
+func.func @matmul(%A: memref<1024x1024xf32>, %B: memref<1024x1024xf32>, %C: memref<1024x1024xf32>) {
+  affine.for %i = 0 to 1024 {
+    affine.for %j = 0 to 1024 {
+      affine.for %k = 0 to 1024 {
+        %0 = affine.load %A[%i, %k] : memref<1024x1024xf32>
+        %1 = affine.load %B[%k, %j] : memref<1024x1024xf32>
+        %2 = affine.load %C[%i, %j] : memref<1024x1024xf32>
+        %3 = arith.mulf %0, %1 : f32
+        %4 = arith.addf %2, %3 : f32
+        affine.store %4, %C[%i, %j] : memref<1024x1024xf32>
+      }
+    }
+  }
+  return
+}
+```
 
----
+输出（CPU 目标）:
+```mlir
+func.func @matmul(%A: memref<1024x1024xf32>, %B: memref<1024x1024xf32>, %C: memref<1024x1024xf32>) {
+  affine.parallel (%i0) = (0) to (1024) step (32) {
+    affine.parallel (%j0) = (0) to (1024) step (32) {
+      affine.for %k0 = 0 to 1024 step 32 {
+        affine.for %i = #map(%i0) to #map(%i0 + 32) {
+          affine.for %j = #map(%j0) to #map(%j0 + 32) {
+            affine.for %k = #map(%k0) to #map(%k0 + 32) {
+              // 计算保持不变
+            }
+          }
+        }
+      }
+    }
+  }
+  return
+}
+```
 
-## 参考与致谢
-- [PPCG](https://repo.or.cz/ppcg.git)
-- [PET](https://repo.or.cz/pet.git)
-- [ISL](https://repo.or.cz/isl.git)
-- [LLVM Project](https://github.com/llvm/llvm-project)
+## 测试
 
----
+### 单元测试
+```bash
+cd build
+make check-autopoly-unittests
+```
+
+### 集成测试
+```bash
+cd build
+make check-autopoly
+```
+
+### MLIR 测试
+```bash
+cd build
+llvm-lit test/AutoPoly/
+```
+
+## 贡献
+
+1. Fork 仓库
+2. 创建功能分支
+3. 为新功能添加测试
+4. 确保所有测试通过
+5. 提交 pull request
 
 ## 许可证
-本项目采用 Apache License 2.0 with LLVM Exceptions（SPDX: Apache-2.0 WITH LLVM-exception）开源协议。
 
-第三方子模块（如 PPCG、PET、ISL、LLVM）仅为方便集成而收录，均遵循各自的开源协议，详情请参见各子模块目录下的 LICENSE 文件。 
+本项目采用 Apache License 2.0 许可证 - 详见 LICENSE 文件。
+
+## 致谢
+
+- 感谢 MLIR 和 LLVM 社区提供的基础设施和工具
+- 感谢 PPCG 工具开发者提供的多面体编译优化技术
+- 感谢 ISL 库开发者提供的数学优化库及其优化算法
+- 感谢 PET 库开发者提供的多面体模型提取技术

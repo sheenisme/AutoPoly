@@ -142,24 +142,10 @@ set(PET_DIR ${PPCG_DIR}/pet)
 include(ConfigPET)
 include(ConfigPPCG)
 
-# Configure AutoPoly application
-message(STATUS "Configuring AutoPoly application")
-set(AUTOPOLY_SOURCES
-    ${AUTOPOLY_SOURCE_DIR}/lib/main.cpp
-)
-include_directories(AutoPoly PRIVATE
-    ${AUTOPOLY_SOURCE_DIR}/include
-    ${PPCG_DIR}
-    ${ISL_DIR}/include
-    ${PET_DIR}/include
-)
+# Add subdirectories for main components
+add_subdirectory(lib)
+add_subdirectory(tools)
 
-# Build the main application
-add_executable(AutoPoly ${AUTOPOLY_SOURCES})
-set_target_properties(AutoPoly PROPERTIES OUTPUT_NAME "AutoPoly")
-target_link_libraries(AutoPoly ppcg)
-
-# Install AutoPoly application
-install(TARGETS AutoPoly
-    RUNTIME DESTINATION bin
-)
+# Add subdirectories for tests and unittests
+# add_subdirectory(test)
+# add_subdirectory(unittests)

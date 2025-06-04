@@ -43,8 +43,6 @@ set(PPCG_SOURCES
     ${PPCG_DIR}/version.c
     # Remove ppcg.c from the library to avoid main function conflict
     # ${PPCG_DIR}/ppcg.c
-    # Add ppcg_wrapper.c file containing ppcg_main implementation
-    ${AUTOPOLY_SOURCE_DIR}/lib/ppcg_wrapper.c
 )
 
 # Build PPCG library
@@ -120,3 +118,6 @@ file(GLOB PPCG_HEADERS "${PPCG_DIR}/*.h")
 install(FILES ${PPCG_HEADERS} 
     DESTINATION include/ppcg
 )
+
+# Set PPCG include directories
+set(PPCG_INCLUDE_DIRS ${PPCG_DIR})

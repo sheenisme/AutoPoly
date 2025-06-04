@@ -58,13 +58,21 @@ jobs:
 
       - name: Build AutoPoly
         run: |
-          bash scripts/build.sh
+          bash scripts/build.sh 2>&1 | tee build_autopoly.log
         env:
           CCACHE_DIR: ~/.ccache
 
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build_autopoly_log-${{ matrix.build_type }}
+          path: build_autopoly.log
+
       - name: Test AutoPoly binary exists
         run: |
-          test -f build/bin/AutoPoly
+          test -f build/bin/autopoly-c-opt
+          test -f build/bin/autopoly-mlir-opt
 
       - name: Show build output
         run: |
@@ -72,4 +80,4 @@ jobs:
           echo "Build directory contents:"
           ls -lh build/bin/
           echo "CCache statistics:"
-          ccache -s 
+          ccache -s
