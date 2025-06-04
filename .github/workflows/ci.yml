@@ -9,32 +9,58 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build_type: [Release, Debug]
+        include:
+          - build_type: Release
+            cmake_build_type: Release
+          - build_type: Debug
+            cmake_build_type: Debug
+
     env:
       LLVM_BUILD_DIR: ${{ github.workspace }}/llvm-build
+      CMAKE_BUILD_TYPE: ${{ matrix.cmake_build_type }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 3
           submodules: recursive
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build build-essential git libgmp-dev
+          sudo apt-get install -y cmake ninja-build build-essential git libgmp-dev ccache
+
+      - name: Setup ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ matrix.build_type }}-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-${{ matrix.build_type }}-
 
       - name: Cache LLVM build
         uses: actions/cache@v4
         with:
           path: llvm-build
-          key: ${{ runner.os }}-llvm-build-${{ hashFiles('third_party/llvm-project/**') }}
+          key: ${{ runner.os }}-llvm-build-${{ matrix.build_type }}-${{ hashFiles('third_party/llvm-project/**') }}
+          restore-keys: |
+            ${{ runner.os }}-llvm-build-${{ matrix.build_type }}-
 
       - name: Build LLVM/Clang/MLIR
         run: |
           bash scripts/llvm-build.sh
+        env:
+          CCACHE_DIR: ~/.ccache
 
       - name: Build autoStash
         run: |
           bash scripts/build.sh
+        env:
+          CCACHE_DIR: ~/.ccache
 
       - name: Test autoStash binary exists
         run: |
@@ -42,4 +68,8 @@ jobs:
 
       - name: Show build output
         run: |
-          ls -lh build/bin/ 
+          echo "Build type: ${{ matrix.build_type }}"
+          echo "Build directory contents:"
+          ls -lh build/bin/
+          echo "CCache statistics:"
+          ccache -s 

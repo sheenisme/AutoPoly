@@ -15,7 +15,7 @@ if [ ! -d "third_party/llvm-project/.git" ]; then
     git submodule update --init --recursive third_party/llvm-project
 else
     echo "Updating llvm-project submodule..."
-    git submodule update --recursive --remote third_party/llvm-project
+    git submodule update --recursive third_party/llvm-project
 fi
 
 # Build LLVM/Clang/MLIR
