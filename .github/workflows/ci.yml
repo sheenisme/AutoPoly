@@ -56,15 +56,15 @@ jobs:
         env:
           CCACHE_DIR: ~/.ccache
 
-      - name: Build autoStash
+      - name: Build AutoPoly
         run: |
           bash scripts/build.sh
         env:
           CCACHE_DIR: ~/.ccache
 
-      - name: Test autoStash binary exists
+      - name: Test AutoPoly binary exists
         run: |
-          test -f build/bin/autoStash
+          test -f build/bin/AutoPoly
 
       - name: Show build output
         run: |

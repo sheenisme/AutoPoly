@@ -2,7 +2,7 @@
 
 ---
 
-<h1 align="center">autoStash</h1>
+<h1 align="center">AutoPoly</h1>
 
 <p align="center">
   <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build Status" />
@@ -12,7 +12,7 @@
 
 ---
 
-> **autoStash** is a C/C++ project for polyhedral-based automatic parallelization and code generation, integrating PPCG, PET, ISL, and LLVM/Clang/MLIR.
+> **AutoPoly** is a C/C++ project for polyhedral-based automatic parallelization and code generation, integrating PPCG, PET, ISL, and LLVM/Clang/MLIR.
 
 ---
 
@@ -66,7 +66,7 @@
 ### 1. Clone the repository
 ```sh
 git clone --recursive <repo_url>
-cd autoStash
+cd AutoPoly
 ```
 If you forgot `--recursive`:
 ```sh
@@ -78,11 +78,11 @@ git submodule update --init --recursive
 bash scripts/llvm-build.sh
 ```
 
-### 3. Build autoStash
+### 3. Build AutoPoly
 ```sh
 bash scripts/build.sh
 ```
-- The main binary will be generated in `build/bin/autoStash`.
+- The main binary will be generated in `build/bin/AutoPoly`.
 
 ---
 
@@ -102,9 +102,9 @@ bash scripts/build.sh
 ---
 
 ## Usage
-The main entry point is the `autoStash` binary. For example:
+The main entry point is the `AutoPoly` binary. For example:
 ```sh
-./build/bin/autoStash --help
+./build/bin/AutoPoly --help
 ```
 You can use PPCG command-line options to process C files and generate CUDA/OpenCL code. See PPCG documentation for details.
 

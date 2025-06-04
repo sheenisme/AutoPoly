@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20.0)
-project(autoStash LANGUAGES CXX C)
+project(AutoPoly LANGUAGES CXX C)
 
 # Build with install name directory
 # TODO: fix after support LLVM/Clang/MLIR in-tree build
@@ -118,9 +118,9 @@ option(USE_OPENCL "Disable OpenCL support" OFF)
 option(USE_OPENMP "Enable OpenMP support" ON)
 option(BUILD_PET_EXE "Enable Build PET executable" ON)
 
-# Set autoStash project directories
-set(AUTOSTASH_SOURCE_DIR ${PROJECT_SOURCE_DIR})
-set(AUTOSTASH_BINARY_DIR ${PROJECT_BINARY_DIR})
+# Set AutoPoly project directories
+set(AUTOPOLY_SOURCE_DIR ${PROJECT_SOURCE_DIR})
+set(AUTOPOLY_BINARY_DIR ${PROJECT_BINARY_DIR})
 
 # Set default build type to Debug
 if(NOT CMAKE_BUILD_TYPE)
@@ -129,37 +129,37 @@ endif()
 message(STATUS "CMake Build type: ${CMAKE_BUILD_TYPE}")
 
 # Set module search path for some dependencies tools
-list(APPEND CMAKE_MODULE_PATH ${AUTOSTASH_SOURCE_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH ${AUTOPOLY_SOURCE_DIR}/cmake)
 
 # Configure required dependencies
 include(ConfigDEPS)
 
 # Configure all third-party libraries in ppcg directory
-set(PPCG_DIR ${AUTOSTASH_SOURCE_DIR}/third_party/ppcg)
+set(PPCG_DIR ${AUTOPOLY_SOURCE_DIR}/third_party/ppcg)
 set(ISL_DIR ${PPCG_DIR}/isl)
 include(ConfigISL)
 set(PET_DIR ${PPCG_DIR}/pet)
 include(ConfigPET)
 include(ConfigPPCG)
 
-# Configure autoStash application
-message(STATUS "Configuring autoStash application")
-set(AUTOSTASH_SOURCES
-    ${AUTOSTASH_SOURCE_DIR}/lib/main.cpp
+# Configure AutoPoly application
+message(STATUS "Configuring AutoPoly application")
+set(AUTOPOLY_SOURCES
+    ${AUTOPOLY_SOURCE_DIR}/lib/main.cpp
 )
-include_directories(autoStash PRIVATE
-    ${AUTOSTASH_SOURCE_DIR}/include
+include_directories(AutoPoly PRIVATE
+    ${AUTOPOLY_SOURCE_DIR}/include
     ${PPCG_DIR}
     ${ISL_DIR}/include
     ${PET_DIR}/include
 )
 
 # Build the main application
-add_executable(autoStash ${AUTOSTASH_SOURCES})
-set_target_properties(autoStash PROPERTIES OUTPUT_NAME "autoStash")
-target_link_libraries(autoStash ppcg)
+add_executable(AutoPoly ${AUTOPOLY_SOURCES})
+set_target_properties(AutoPoly PROPERTIES OUTPUT_NAME "AutoPoly")
+target_link_libraries(AutoPoly ppcg)
 
-# Install autoStash application
-install(TARGETS autoStash
+# Install AutoPoly application
+install(TARGETS AutoPoly
     RUNTIME DESTINATION bin
 )

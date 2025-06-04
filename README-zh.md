@@ -2,7 +2,7 @@
 
 ---
 
-<h1 align="center">autoStash</h1>
+<h1 align="center">AutoPoly</h1>
 
 <p align="center">
   <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build Status" />
@@ -12,7 +12,7 @@
 
 ---
 
-> **autoStash** 是一个基于多面体模型的 C/C++ 自动并行化与代码生成工具，集成了 PPCG、PET、ISL 及 LLVM/Clang/MLIR。
+> **AutoPoly** 是一个基于多面体模型的 C/C++ 自动并行化与代码生成工具，集成了 PPCG、PET、ISL 及 LLVM/Clang/MLIR。
 
 ---
 
@@ -66,7 +66,7 @@
 ### 1. 克隆仓库
 ```sh
 git clone --recursive <repo_url>
-cd autoStash
+cd AutoPoly
 ```
 如果忘记加 `--recursive`：
 ```sh
@@ -78,11 +78,11 @@ git submodule update --init --recursive
 bash scripts/llvm-build.sh
 ```
 
-### 3. 编译 autoStash 主工程
+### 3. 编译 AutoPoly 主工程
 ```sh
 bash scripts/build.sh
 ```
-- 主程序会生成在 `build/bin/autoStash`。
+- 主程序会生成在 `build/bin/AutoPoly`。
 
 ---
 
@@ -102,9 +102,9 @@ bash scripts/build.sh
 ---
 
 ## 使用方法
-主程序入口为 `autoStash`，例如：
+主程序入口为 `AutoPoly`，例如：
 ```sh
-./build/bin/autoStash --help
+./build/bin/AutoPoly --help
 ```
 你可以使用 PPCG 的命令行参数处理 C 文件并生成 CUDA/OpenCL 代码，具体参数和用法请参考 PPCG 官方文档。
 

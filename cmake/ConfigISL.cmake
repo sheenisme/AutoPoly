@@ -112,14 +112,14 @@ elseif (HAVE_SYS_INTTYPES_H)
 else()
     message(FATAL_ERROR "No stdint.h or compatible found")
 endif ()
-file(WRITE "${AUTOSTASH_BINARY_DIR}/include/isl/stdint.h.tmp"
+file(WRITE "${AUTOPOLY_BINARY_DIR}/include/isl/stdint.h.tmp"
     "${INCLUDE_STDINT_H}\n")
-configure_file("${AUTOSTASH_BINARY_DIR}/include/isl/stdint.h.tmp"
-    "${AUTOSTASH_BINARY_DIR}/include/isl/isl/stdint.h" COPYONLY)
+configure_file("${AUTOPOLY_BINARY_DIR}/include/isl/stdint.h.tmp"
+    "${AUTOPOLY_BINARY_DIR}/include/isl/isl/stdint.h" COPYONLY)
 
 # Create ISL configuration header file
-configure_file("${AUTOSTASH_SOURCE_DIR}/cmake/isl_config.h.cmake" "${AUTOSTASH_BINARY_DIR}/include/isl/isl_config.h")
-include_directories(isl PRIVATE ${AUTOSTASH_BINARY_DIR}/include/isl)
+configure_file("${AUTOPOLY_SOURCE_DIR}/cmake/isl_config.h.cmake" "${AUTOPOLY_BINARY_DIR}/include/isl/isl_config.h")
+include_directories(isl PRIVATE ${AUTOPOLY_BINARY_DIR}/include/isl)
 
 # Include ISL headers directories
 include_directories(isl PRIVATE

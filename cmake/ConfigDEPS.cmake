@@ -77,15 +77,15 @@ else()
 endif()
 
 # Set output directories for binaries and libraries
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${AUTOSTASH_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${AUTOSTASH_BINARY_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${AUTOSTASH_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${AUTOPOLY_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${AUTOPOLY_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${AUTOPOLY_BINARY_DIR}/lib)
 message(STATUS "Binary output directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 message(STATUS "Library output directory: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 message(STATUS "Archive output directory: ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
 
 # Set default installation prefix
-set(CMAKE_INSTALL_PREFIX ${AUTOSTASH_SOURCE_DIR}/install)
+set(CMAKE_INSTALL_PREFIX ${AUTOPOLY_SOURCE_DIR}/install)
 message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 
 # Set RPATH settings to ensure installed binaries can find shared libraries
