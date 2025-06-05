@@ -1,5 +1,4 @@
 
-<div align="right">[English Version](README.md)</div>
 
 <h1 align="center">AutoPoly: Automatic Polyhedral Scheduling Framework for MLIR 
 <img src="https://img.shields.io/badge/MLIR-Polyhedral-blue?logo=llvm&logoColor=white" alt="MLIR" height="24"/></h1>
@@ -88,7 +87,7 @@ AutoPoly/
 - <img src="https://img.icons8.com/ios-filled/20/000000/inspection.png"/> **Analysis Framework**: Polyhedral extraction, dependence analysis, memory access analysis
 - <img src="https://img.icons8.com/ios-filled/20/000000/search--v1.png"/> **Target Detection**: Automatic hardware detection, capability description, memory hierarchy analysis
 - <img src="https://img.icons8.com/ios-filled/20/000000/strategy-board.png"/> **Scheduling Strategies**: Target-specific strategy selection, parameter tuning, extensible algorithm registry
-- <img src="https://img.icons8.com/ios-filled/20/000000/transform.png"/> **Transformations**: Tiling, fusion, parallelization, skewing, vectorization, memory optimization
+- <img src="https://img.icons8.com/ios-filled/20/000000/synchronize.png"/> **Transformations**: Tiling, fusion, parallelization, skewing, vectorization, memory optimization
 - <img src="https://img.icons8.com/ios-filled/20/000000/code.png"/> **Code Generation**: MLIR affine dialect emission, parallel loop generation, memory access optimization
 - <img src="https://img.icons8.com/ios-filled/20/000000/flow-chart.png"/> **Pass Infrastructure**: MLIR pass registration, pipeline management, configuration
 
@@ -105,12 +104,13 @@ cd AutoPoly
 git submodule update --init --recursive
 
 # 2. Build LLVM/MLIR (if not already available)
-bash scripts/llvm-build.sh
-# or manually set LLVM_BUILD_DIR
-export LLVM_BUILD_DIR=/path/to/your/llvm-build
+# (Recommended: let build.sh handle this automatically)
 
-# 3. Build AutoPoly
+# 3. Build AutoPoly (recommended, will reuse cached LLVM if available)
+bash scripts/build.sh /path/to/your/llvm-build
+# or simply
 bash scripts/build.sh
+# (If omitted, will use ./llvm-build by default)
 
 # 4. Run tests
 ninja -C build check-autopoly
@@ -119,7 +119,7 @@ ninja -C build check-autopoly
 bash scripts/install.sh
 ```
 
-> See [CI workflow](.github/workflows/ci.yml) for a full example of automated build and test steps.
+> **Tip:** The build system will automatically detect and reuse an existing LLVM build (bin/llvm-config) in the specified directory, avoiding unnecessary recompilation. This is also used in CI for caching. See [CI workflow](.github/workflows/ci.yml) for details.
 
 ---
 

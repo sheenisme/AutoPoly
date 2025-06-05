@@ -45,22 +45,26 @@ jobs:
       - name: Cache LLVM build
         uses: actions/cache@v4
         with:
-          path: llvm-build
+          path: ${{ env.LLVM_BUILD_DIR }}
           key: ${{ runner.os }}-llvm-build-${{ matrix.build_type }}-${{ hashFiles('third_party/llvm-project/**') }}
           restore-keys: |
             ${{ runner.os }}-llvm-build-${{ matrix.build_type }}-
+        id: cache-llvm
 
       - name: Build LLVM/Clang/MLIR
+        if: steps.cache-llvm.outputs.cache-hit != 'true'
         run: |
-          bash scripts/llvm-build.sh
+          bash scripts/llvm-build.sh "$LLVM_BUILD_DIR"
         env:
           CCACHE_DIR: ~/.ccache
+          LLVM_BUILD_DIR: ${{ env.LLVM_BUILD_DIR }}
 
       - name: Build AutoPoly
         run: |
-          bash scripts/build.sh 2>&1 | tee build_autopoly.log
+          bash scripts/build.sh "$LLVM_BUILD_DIR" 2>&1 | tee build_autopoly.log
         env:
           CCACHE_DIR: ~/.ccache
+          LLVM_BUILD_DIR: ${{ env.LLVM_BUILD_DIR }}
 
       - name: Upload build log
         if: always()

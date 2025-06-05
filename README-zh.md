@@ -84,7 +84,7 @@ AutoPoly/
 - <img src="https://img.icons8.com/ios-filled/20/000000/inspection.png"/> **分析框架**：多面体提取、依赖分析、内存访问分析
 - <img src="https://img.icons8.com/ios-filled/20/000000/search--v1.png"/> **硬件平台检测**：自动硬件检测、能力描述、内存层次分析
 - <img src="https://img.icons8.com/ios-filled/20/000000/strategy-board.png"/> **调度策略**：目标特定策略选择、参数调优、算法注册
-- <img src="https://img.icons8.com/ios-filled/20/000000/transform.png"/> **多面体变换**：分块、融合、并行化、倾斜、向量化、内存优化
+- <img src="https://img.icons8.com/ios-filled/20/000000/synchronize.png"/> **多面体变换**：分块、融合、并行化、倾斜、向量化、内存优化
 - <img src="https://img.icons8.com/ios-filled/20/000000/code.png"/> **代码生成**：MLIR仿射方言生成、并行循环生成、内存访问优化
 - <img src="https://img.icons8.com/ios-filled/20/000000/flow-chart.png"/> **Pass基础设施**：MLIR Pass注册、流水线管理、配置
 
@@ -92,7 +92,7 @@ AutoPoly/
 
 ## ⚡ 安装方法
 
-AutoPoly 提供了便捷的脚本进行安装。可直接使用脚本或参考下述手动步骤。
+AutoPoly 提供了便捷的脚本进行安装。推荐直接使用 build.sh 自动处理LLVM缓存与主工程编译。
 
 ```bash
 # 1. 克隆仓库及子模块
@@ -100,13 +100,13 @@ git clone https://github.com/sheenisme/AutoPoly.git
 cd AutoPoly
 git submodule update --init --recursive
 
-# 2. 构建LLVM/MLIR（如未安装）
-bash scripts/llvm-build.sh
-# 或手动设置LLVM_BUILD_DIR
-export LLVM_BUILD_DIR=/path/to/your/llvm-build
+# 2. 构建LLVM/MLIR（推荐直接让 build.sh 自动处理）
 
-# 3. 构建AutoPoly
+# 3. 构建AutoPoly（推荐，自动检测并复用已有LLVM缓存）
+bash scripts/build.sh /path/to/your/llvm-build
+# 或直接
 bash scripts/build.sh
+# （如省略参数，默认使用 ./llvm-build）
 
 # 4. 运行测试
 ninja -C build check-autopoly
@@ -115,7 +115,7 @@ ninja -C build check-autopoly
 bash scripts/install.sh
 ```
 
-> 详见 [CI workflow](.github/workflows/ci.yml) 了解自动化构建与测试流程。
+> **提示：** build.sh 会自动检测指定目录下的LLVM（bin/llvm-config），如已存在则跳过重编译。CI也采用此机制缓存LLVM，避免重复编译。详见 [CI workflow](.github/workflows/ci.yml)。
 
 ---
 
