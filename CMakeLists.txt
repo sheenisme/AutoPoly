@@ -146,6 +146,10 @@ include(ConfigPPCG)
 add_subdirectory(lib)
 add_subdirectory(tools)
 
-# Add subdirectories for tests and unittests
-# add_subdirectory(test)
-# add_subdirectory(unittests)
+# Enable testing
+enable_testing()
+include(CTest)
+
+# Add tests directory
+add_subdirectory(test)
+add_subdirectory(unittests)

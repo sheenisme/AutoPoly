@@ -10,8 +10,13 @@ configure_lit_site_cfg(
 
 set(AUTOPOLY_TEST_DEPENDS
   FileCheck count not
-  autopoly-opt
-  AutoPolyLib
+  autopoly-mlir-opt
+  AutoPolyTarget
+  AutoPolyScheduling
+  AutoPolyAnalysis
+  AutoPolyTransform
+  AutoPolyPasses
+  AutoPolyCodeGen
 )
 
 add_lit_testsuite(check-autopoly "Running the AutoPoly regression tests"
@@ -26,5 +31,7 @@ add_lit_testsuites(AUTOPOLY ${CMAKE_CURRENT_SOURCE_DIR} DEPENDS ${AUTOPOLY_TEST_
 # Add subdirectories for different test categories
 add_subdirectory(Analysis)
 add_subdirectory(Transform)
-# add_subdirectory(Passes)
-# add_subdirectory(Integration)
+add_subdirectory(CodeGen)
+add_subdirectory(Scheduling)
+add_subdirectory(Target)
+add_subdirectory(Passes)

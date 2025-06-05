@@ -128,19 +128,19 @@ bash scripts/install.sh
 ### Command-Line Tool
 ```bash
 # Basic usage (auto target detection)
-autopoly-opt input.mlir -autopoly-scheduling
+autopoly-mlir-opt input.mlir -autopoly-scheduling
 
 # Specify target type
-autopoly-opt input.mlir -autopoly-scheduling="target-type=gpu"
+autopoly-mlir-opt input.mlir -autopoly-scheduling="target-type=gpu"
 
 # Custom tiling parameters
-autopoly-opt input.mlir -autopoly-scheduling="tile-sizes=32,32,32"
+autopoly-mlir-opt input.mlir -autopoly-scheduling="tile-sizes=32,32,32"
 
 # Enable specific optimizations
-autopoly-opt input.mlir -autopoly-scheduling="enable-tiling=true enable-fusion=true"
+autopoly-mlir-opt input.mlir -autopoly-scheduling="enable-tiling=true enable-fusion=true"
 
 # Debug mode with detailed output
-autopoly-opt input.mlir -autopoly-scheduling="debug-mode=true dump-schedules=true"
+autopoly-mlir-opt input.mlir -autopoly-scheduling="debug-mode=true dump-schedules=true"
 ```
 
 ### MLIR Pass Integration

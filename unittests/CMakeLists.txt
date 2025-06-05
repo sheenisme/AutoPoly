@@ -1,10 +1,26 @@
 # AutoPoly Unit Tests
-
+# Add Google Test Framework
+if(NOT TARGET GTest::gtest)
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        SOURCE_DIR ${CMAKE_SOURCE_DIR}/third_party/googletest
+    )
+    FetchContent_MakeAvailable(googletest)
+endif()
 find_package(GTest REQUIRED)
 
 # Include directories
-include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${GTEST_INCLUDE_DIRS})
+include_directories(
+  ${CMAKE_SOURCE_DIR}/include
+  ${CMAKE_SOURCE_DIR}/unittests
+  ${GTEST_INCLUDE_DIRS}
+  ${ISL_INCLUDE_DIRS}
+  ${AUTOPOLY_BINARY_DIR}/include
+  ${AUTOPOLY_BINARY_DIR}/include/isl
+  ${AUTOPOLY_BINARY_DIR}/include/pet
+  ${AUTOPOLY_BINARY_DIR}/include/ppcg
+)
 
 # Link directories
 link_directories(${CMAKE_BINARY_DIR}/lib)
@@ -34,95 +50,23 @@ target_link_libraries(AutoPolyTestUtils
   MLIRTransforms
 )
 
-# Analysis Tests
-add_executable(AnalysisTests
-  Analysis/PolyhedralExtractionTest.cpp
-  Analysis/DependenceAnalysisTest.cpp
-)
-
-target_link_libraries(AnalysisTests
-  AutoPolyTestUtils
-  ${GTEST_LIBRARIES}
-  pthread
-)
-
-# Scheduling Tests
-add_executable(SchedulingTests
-  Scheduling/SchedulingStrategyTest.cpp
-  Scheduling/SchedulingStrategyManagerTest.cpp
-)
-
-target_link_libraries(SchedulingTests
-  AutoPolyTestUtils
-  ${GTEST_LIBRARIES}
-  pthread
-)
-
-# Transform Tests
-add_executable(TransformTests
-  Transform/TilingTransformTest.cpp
-  Transform/ParallelizationTransformTest.cpp
-  Transform/FusionTransformTest.cpp
-  Transform/SkewingTransformTest.cpp
-  Transform/SchedulingTransformerTest.cpp
-)
-
-target_link_libraries(TransformTests
-  AutoPolyTestUtils
-  ${GTEST_LIBRARIES}
-  pthread
-)
-
-# CodeGen Tests
-add_executable(CodeGenTests
-  CodeGen/AffineCodeGenerationTest.cpp
-  CodeGen/ParallelLoopOptimizerTest.cpp
-  CodeGen/MemoryAccessOptimizerTest.cpp
-)
-
-target_link_libraries(CodeGenTests
-  AutoPolyTestUtils
-  ${GTEST_LIBRARIES}
-  pthread
-)
-
-# Target Tests
-add_executable(TargetTests
-  Target/TargetDetectorTest.cpp
-  Target/TargetCharacteristicsTest.cpp
-)
-
-target_link_libraries(TargetTests
-  AutoPolyTestUtils
-  ${GTEST_LIBRARIES}
-  pthread
-)
-
-# Pass Tests
-add_executable(PassTests
-  Passes/AutoPolyPassesTest.cpp
-  Passes/PolyhedralAnalysisPassTest.cpp
-  Passes/DependenceAnalysisPassTest.cpp
-  Passes/TargetDetectionPassTest.cpp
-)
-
-target_link_libraries(PassTests
-  AutoPolyTestUtils
-  ${GTEST_LIBRARIES}
-  pthread
-)
+# Add test subdirectories
+add_subdirectory(Analysis)
+add_subdirectory(CodeGen)
+add_subdirectory(Scheduling)
+add_subdirectory(Transform)
+add_subdirectory(Target)
+add_subdirectory(Passes)
 
 # Add test targets
 add_custom_target(check-autopoly-unit
-  COMMAND ${CMAKE_CTEST_COMMAND} --verbose
-  DEPENDS AnalysisTests SchedulingTests TransformTests CodeGenTests TargetTests PassTests
+  COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+  DEPENDS
+    PolyhedralExtractionTest
+    DependenceAnalysisTest
+    CodeGenUnitTests
+    SchedulingUnitTests
+    TransformUnitTests
+    TargetUnitTests
+    PassesUnitTests
 )
-
-# Register tests with CTest
-enable_testing()
-add_test(NAME AnalysisTests COMMAND AnalysisTests)
-add_test(NAME SchedulingTests COMMAND SchedulingTests)
-add_test(NAME TransformTests COMMAND TransformTests)
-add_test(NAME CodeGenTests COMMAND CodeGenTests)
-add_test(NAME TargetTests COMMAND TargetTests)
-add_test(NAME PassTests COMMAND PassTests)

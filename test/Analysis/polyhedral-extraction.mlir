@@ -69,3 +69,15 @@ func.func @reduction_computation(%A: memref<1000xf32>) -> f32 {
 // CHECK: Number of statements: 1
 // CHECK: Reduction operation detected
 // CHECK: Return value: f32
+
+// RUN: autopoly-mlir-opt %s -autopoly-polyhedral-analysis -o /dev/null | FileCheck %s
+
+func.func @simple_loop(%A: memref<128xf32>) {
+  affine.for %i = 0 to 128 {
+    %v = affine.load %A[%i] : memref<128xf32>
+    affine.store %v, %A[%i] : memref<128xf32>
+  }
+  return
+}
+
+// CHECK: Polyhedral model extracted

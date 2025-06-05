@@ -108,3 +108,15 @@ func.func @iter_args_computation(%A: memref<1000xf32>, %init: f32) -> f32 {
 // CHECK: Iteration arguments detected
 // CHECK: Yield operation: f32
 // CHECK: Reduction pattern with iter_args
+
+func.func @complex_affine(%A: memref<32x32xf32>) {
+  affine.for %i = 0 to 32 {
+    affine.for %j = 0 to 32 {
+      %v = affine.load %A[%i, %j] : memref<32x32xf32>
+      affine.store %v, %A[%i, %j] : memref<32x32xf32>
+    }
+  }
+  return
+}
+
+// CHECK: Polyhedral model extracted

@@ -20,6 +20,7 @@ add_mlir_library(AutoPolyAnalysis
 target_include_directories(AutoPolyAnalysis
   PUBLIC
   ${AUTOPOLY_SOURCE_DIR}/include
+  ${AUTOPOLY_BINARY_DIR}/include
   ${ISL_INCLUDE_DIRS}
   ${LLVM_INCLUDE_DIRS}
   ${MLIR_INCLUDE_DIRS}
@@ -36,4 +37,11 @@ target_link_libraries(AutoPolyAnalysis
   MLIRDialect
   AutoPolyTarget
   isl
+)
+
+# Install headers
+install(
+  DIRECTORY ${AUTOPOLY_SOURCE_DIR}/include/AutoPoly
+  DESTINATION include
+  FILES_MATCHING PATTERN "*.h"
 )

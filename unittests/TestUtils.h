@@ -19,6 +19,7 @@
 #include "mlir/IR/BuiltinOps.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/Parser/Parser.h"
+#include "mlir/Pass/Pass.h"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -79,10 +80,10 @@ protected:
   void SetUp() override;
   
   /// Create mock target characteristics
-  target::TargetCharacteristics createMockCPUTarget();
-  target::TargetCharacteristics createMockGPUTarget();
-  target::TargetCharacteristics createMockFPGATarget();
-  target::TargetCharacteristics createMockNPUTarget();
+  autopoly::target::TargetCharacteristics createMockCPUTarget();
+  autopoly::target::TargetCharacteristics createMockGPUTarget();
+  autopoly::target::TargetCharacteristics createMockFPGATarget();
+  autopoly::target::TargetCharacteristics createMockNPUTarget();
 };
 
 /// Test fixture for transformation components
@@ -114,11 +115,10 @@ class PassTestBase : public AutoPolyTestBase {
 protected:
   void SetUp() override;
   
-  /// Run pass on function and return result
-  mlir::LogicalResult runPassOnFunction(mlir::Pass* pass, mlir::func::FuncOp funcOp);
-  
   /// Check if pass modified the function
   bool wasModified(mlir::func::FuncOp before, mlir::func::FuncOp after);
+  /// Run a pass on a function
+  mlir::LogicalResult runPassOnFunction(mlir::Pass* pass, mlir::func::FuncOp funcOp);
 };
 
 /// Utility functions for testing
@@ -147,22 +147,22 @@ bool isFused(mlir::func::FuncOp funcOp);
 /// Mock classes for testing
 
 /// Mock target detector for testing
-class MockTargetDetector : public target::TargetDetector {
+class MockTargetDetector : public autopoly::target::TargetDetector {
 public:
   MockTargetDetector();
   
-  std::vector<target::TargetCharacteristics> detectTargets() override;
-  bool isTargetAvailable(target::TargetType type) override;
-  target::TargetCharacteristics getDefaultTarget() override;
+  std::vector<autopoly::target::TargetCharacteristics> detectTargets() override;
+  bool isTargetAvailable(autopoly::target::TargetType type) override;
+  autopoly::target::TargetCharacteristics getDefaultTarget() override;
   
   /// Add mock target for testing
-  void addMockTarget(const target::TargetCharacteristics& target);
+  void addMockTarget(const autopoly::target::TargetCharacteristics& target);
   
   /// Clear all mock targets
   void clearMockTargets();
 
 private:
-  std::vector<target::TargetCharacteristics> mock_targets_;
+  std::vector<autopoly::target::TargetCharacteristics> mock_targets_;
 };
 
 /// Test data providers

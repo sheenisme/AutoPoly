@@ -124,19 +124,19 @@ bash scripts/install.sh
 ### 命令行工具
 ```bash
 # 基本用法（自动硬件平台检测）
-autopoly-opt input.mlir -autopoly-scheduling
+autopoly-mlir-opt input.mlir -autopoly-scheduling
 
 # 指定目标类型
-autopoly-opt input.mlir -autopoly-scheduling="target-type=gpu"
+autopoly-mlir-opt input.mlir -autopoly-scheduling="target-type=gpu"
 
 # 自定义分块参数
-autopoly-opt input.mlir -autopoly-scheduling="tile-sizes=32,32,32"
+autopoly-mlir-opt input.mlir -autopoly-scheduling="tile-sizes=32,32,32"
 
 # 启用特定优化
-autopoly-opt input.mlir -autopoly-scheduling="enable-tiling=true enable-fusion=true"
+autopoly-mlir-opt input.mlir -autopoly-scheduling="enable-tiling=true enable-fusion=true"
 
 # 调试模式与详细输出
-autopoly-opt input.mlir -autopoly-scheduling="debug-mode=true dump-schedules=true"
+autopoly-mlir-opt input.mlir -autopoly-scheduling="debug-mode=true dump-schedules=true"
 ```
 
 ### MLIR Pass集成

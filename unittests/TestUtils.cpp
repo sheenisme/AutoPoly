@@ -7,35 +7,60 @@
 //===----------------------------------------------------------------------===//
 
 #include "TestUtils.h"
+
 #include "AutoPoly/Analysis/PolyhedralExtraction.h"
+#include "AutoPoly/Target/TargetInfo.h"
 
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/IR/Builders.h"
-#include "mlir/InitAllDialects.h"
+#include "mlir/IR/BuiltinOps.h"
+#include "mlir/IR/MLIRContext.h"
+#include "mlir/IR/Types.h"
+#include "mlir/IR/Value.h"
+#include "mlir/IR/Attributes.h"
+#include "mlir/IR/Operation.h"
+#include "mlir/IR/OpImplementation.h"
+#include "mlir/Parser/Parser.h"
+#include "mlir/Pass/Pass.h"
+#include "mlir/Support/LogicalResult.h"
+#include "mlir/IR/IntegerSet.h"
+#include "mlir/Pass/PassManager.h"
 
+#include <gtest/gtest.h>
+#include <memory>
+#include <string>
+
+// Forward declarations for ISL
+extern "C" {
 #include <isl/ctx.h>
-#include <chrono>
+}
 
 using namespace mlir;
+using namespace mlir::func;
+using namespace mlir::affine;
+using namespace mlir::arith;
+using namespace mlir::memref;
 
 namespace autopoly {
 namespace test {
 
-// AutoPolyTestBase implementation
 void AutoPolyTestBase::SetUp() {
   mlir_context_ = std::make_unique<MLIRContext>();
   
   // Register all dialects needed for testing
   DialectRegistry registry;
-  registerAllDialects(registry);
+  registry.template insert<FuncDialect>();
+  registry.template insert<AffineDialect>();
+  registry.template insert<ArithDialect>();
+  registry.template insert<MemRefDialect>();
   mlir_context_->appendDialectRegistry(registry);
   mlir_context_->loadAllAvailableDialects();
   
   // Create ISL context
-  isl_context_ = analysis::PolyhedralUtils::createContext();
+  isl_context_ = isl_ctx_alloc();
 }
 
 void AutoPolyTestBase::TearDown() {
@@ -50,141 +75,128 @@ OwningOpRef<ModuleOp> AutoPolyTestBase::parseMLIR(const std::string& mlir_code) 
   return parseSourceString<ModuleOp>(mlir_code, mlir_context_.get());
 }
 
-func::FuncOp AutoPolyTestBase::createSimpleLoopNest(int num_loops) {
-  OpBuilder builder(mlir_context_.get());
-  auto module = ModuleOp::create(builder.getUnknownLoc());
-  
-  auto func_type = builder.getFunctionType({}, {});
-  auto func_op = func::FuncOp::create(builder.getUnknownLoc(), "test_func", func_type);
-  
-  auto entry_block = func_op.addEntryBlock();
+FuncOp AutoPolyTestBase::createSimpleLoopNest(int num_loops) {
+  MLIRContext context;
+  OpBuilder builder(&context);
+  auto funcType = builder.getFunctionType({}, {});
+  auto funcOp = builder.create<FuncOp>(builder.getUnknownLoc(), "simple_loop_nest", funcType);
+  Block *entry_block = funcOp.addEntryBlock();
   builder.setInsertionPointToStart(entry_block);
-  
-  // Create nested loops
-  affine::AffineForOp current_loop = nullptr;
+  Value iv = nullptr;
   for (int i = 0; i < num_loops; ++i) {
-    auto loop = builder.create<affine::AffineForOp>(
-        builder.getUnknownLoc(), 0, 10, 1);
-    
-    if (current_loop) {
-      builder.setInsertionPointToStart(current_loop.getBody());
-    }
-    current_loop = loop;
-    builder.setInsertionPointToStart(loop.getBody());
+    iv = builder.create<AffineForOp>(builder.getUnknownLoc(), 0, 10).getInductionVar();
+    builder.setInsertionPointToStart(&iv.getDefiningOp()->getRegion(0).front());
   }
-  
-  // Add simple computation in innermost loop
-  auto const_op = builder.create<arith::ConstantIndexOp>(builder.getUnknownLoc(), 1);
-  
-  builder.setInsertionPointToEnd(entry_block);
-  builder.create<func::ReturnOp>(builder.getUnknownLoc());
-  
-  module.push_back(func_op);
-  return func_op;
+  builder.create<ReturnOp>(builder.getUnknownLoc());
+  return funcOp;
 }
 
-func::FuncOp AutoPolyTestBase::createMatMulFunction() {
-  OpBuilder builder(mlir_context_.get());
-  auto module = ModuleOp::create(builder.getUnknownLoc());
+FuncOp AutoPolyTestBase::createMatMulFunction() {
+  MLIRContext context;
+  OpBuilder builder(&context);
   
-  // Create memref types
-  auto memref_type = MemRefType::get({100, 100}, builder.getF32Type());
+  // Create function type with three memref arguments
+  auto memrefType = MemRefType::get({10, 10}, builder.getF32Type());
+  auto funcType = builder.getFunctionType(
+    {memrefType, memrefType, memrefType}, {});
   
-  auto func_type = builder.getFunctionType(
-      {memref_type, memref_type, memref_type}, {});
-  auto func_op = func::FuncOp::create(builder.getUnknownLoc(), "matmul", func_type);
+  auto funcOp = builder.create<FuncOp>(
+    builder.getUnknownLoc(), "matmul", funcType);
   
-  auto entry_block = func_op.addEntryBlock();
+  Block* entry_block = funcOp.addEntryBlock();
   builder.setInsertionPointToStart(entry_block);
   
-  auto args = entry_block.getArguments();
-  Value A = args[0], B = args[1], C = args[2];
+  auto args = entry_block->getArguments();
+  auto A = args[0];
+  auto B = args[1];
+  auto C = args[2];
   
-  // Create triple nested loop for matrix multiplication
-  auto i_loop = builder.create<affine::AffineForOp>(builder.getUnknownLoc(), 0, 100, 1);
-  builder.setInsertionPointToStart(i_loop.getBody());
+  // Create loop nest
+  auto i = builder.create<AffineForOp>(
+    builder.getUnknownLoc(), 0, 10).getInductionVar();
+  builder.setInsertionPointToStart(&i.getDefiningOp()->getRegion(0).front());
   
-  auto j_loop = builder.create<affine::AffineForOp>(builder.getUnknownLoc(), 0, 100, 1);
-  builder.setInsertionPointToStart(j_loop.getBody());
+  auto j = builder.create<AffineForOp>(
+    builder.getUnknownLoc(), 0, 10).getInductionVar();
+  builder.setInsertionPointToStart(&j.getDefiningOp()->getRegion(0).front());
   
-  auto k_loop = builder.create<affine::AffineForOp>(builder.getUnknownLoc(), 0, 100, 1);
-  builder.setInsertionPointToStart(k_loop.getBody());
+  auto k = builder.create<AffineForOp>(
+    builder.getUnknownLoc(), 0, 10).getInductionVar();
+  builder.setInsertionPointToStart(&k.getDefiningOp()->getRegion(0).front());
   
-  // C[i][j] += A[i][k] * B[k][j]
-  Value i = i_loop.getInductionVar();
-  Value j = j_loop.getInductionVar();
-  Value k = k_loop.getInductionVar();
+  // Create memory accesses
+  auto loadA = builder.create<AffineLoadOp>(
+    builder.getUnknownLoc(), A, ValueRange{i, k});
+  auto loadB = builder.create<AffineLoadOp>(
+    builder.getUnknownLoc(), B, ValueRange{k, j});
+  auto loadC = builder.create<AffineLoadOp>(
+    builder.getUnknownLoc(), C, ValueRange{i, j});
   
-  auto a_load = builder.create<affine::AffineLoadOp>(
-      builder.getUnknownLoc(), A, ValueRange{i, k});
-  auto b_load = builder.create<affine::AffineLoadOp>(
-      builder.getUnknownLoc(), B, ValueRange{k, j});
-  auto c_load = builder.create<affine::AffineLoadOp>(
-      builder.getUnknownLoc(), C, ValueRange{i, j});
-  
+  // Create multiply and add
   auto mul = builder.create<arith::MulFOp>(
-      builder.getUnknownLoc(), a_load, b_load);
+    builder.getUnknownLoc(), loadA, loadB);
   auto add = builder.create<arith::AddFOp>(
-      builder.getUnknownLoc(), c_load, mul);
+    builder.getUnknownLoc(), loadC, mul);
   
-  builder.create<affine::AffineStoreOp>(
-      builder.getUnknownLoc(), add, C, ValueRange{i, j});
+  // Store result
+  builder.create<AffineStoreOp>(
+    builder.getUnknownLoc(), add, C, ValueRange{i, j});
   
-  builder.setInsertionPointToEnd(entry_block);
-  builder.create<func::ReturnOp>(builder.getUnknownLoc());
-  
-  module.push_back(func_op);
-  return func_op;
+  builder.create<ReturnOp>(builder.getUnknownLoc());
+  return funcOp;
 }
 
-func::FuncOp AutoPolyTestBase::createComplexAffineFunction() {
-  OpBuilder builder(mlir_context_.get());
-  auto module = ModuleOp::create(builder.getUnknownLoc());
+FuncOp AutoPolyTestBase::createComplexAffineFunction() {
+  MLIRContext context;
+  OpBuilder builder(&context);
   
-  auto memref_type = MemRefType::get({100, 100}, builder.getF32Type());
-  auto func_type = builder.getFunctionType({memref_type, memref_type}, {});
-  auto func_op = func::FuncOp::create(builder.getUnknownLoc(), "complex_func", func_type);
+  auto memrefType = MemRefType::get({10, 10}, builder.getF32Type());
+  auto funcType = builder.getFunctionType({memrefType, memrefType}, {});
   
-  auto entry_block = func_op.addEntryBlock();
+  auto funcOp = builder.create<FuncOp>(
+    builder.getUnknownLoc(), "complex_affine", funcType);
+  
+  Block* entry_block = funcOp.addEntryBlock();
   builder.setInsertionPointToStart(entry_block);
   
-  auto args = entry_block.getArguments();
-  Value A = args[0], B = args[1];
+  auto args = entry_block->getArguments();
+  auto A = args[0];
+  auto B = args[1];
   
-  // Create loop with affine.if
-  auto i_loop = builder.create<affine::AffineForOp>(builder.getUnknownLoc(), 0, 100, 1);
-  builder.setInsertionPointToStart(i_loop.getBody());
+  // Create loop nest
+  auto i = builder.create<AffineForOp>(
+    builder.getUnknownLoc(), 0, 10).getInductionVar();
+  builder.setInsertionPointToStart(&i.getDefiningOp()->getRegion(0).front());
   
-  auto j_loop = builder.create<affine::AffineForOp>(builder.getUnknownLoc(), 0, 100, 1);
-  builder.setInsertionPointToStart(j_loop.getBody());
+  auto j = builder.create<AffineForOp>(
+    builder.getUnknownLoc(), 0, 10).getInductionVar();
+  builder.setInsertionPointToStart(&j.getDefiningOp()->getRegion(0).front());
   
-  Value i = i_loop.getInductionVar();
-  Value j = j_loop.getInductionVar();
+  // Create affine expression: i + j < 15
+  auto expr_i = mlir::getAffineDimExpr(0, builder.getContext());
+  auto expr_j = mlir::getAffineDimExpr(1, builder.getContext());
+  auto expr = expr_i + expr_j;
+  auto constraint = mlir::getAffineConstantExpr(15, builder.getContext());
   
-  // Create affine.if: if i + j < 50
-  auto constraint = builder.getAffineConstantExpr(50);
-  auto expr = builder.getAffineDimExpr(0) + builder.getAffineDimExpr(1);
-  auto condition = IntegerSet::get(2, 0, {expr - constraint}, {false});
+  // Create integer set for the condition
+  SmallVector<AffineExpr> constraints;
+  constraints.push_back(expr - constraint);
+  auto set = IntegerSet::get(2, 0, constraints, SmallVector<bool>{true});
   
-  auto if_op = builder.create<affine::AffineIfOp>(
-      builder.getUnknownLoc(), condition, ValueRange{i, j}, false);
-  
-  // Then block
-  builder.setInsertionPointToStart(if_op.getThenBlock());
-  auto a_load = builder.create<affine::AffineLoadOp>(
-      builder.getUnknownLoc(), A, ValueRange{i, j});
-  auto const_val = builder.create<arith::ConstantFloatOp>(
-      builder.getUnknownLoc(), llvm::APFloat(2.0f), builder.getF32Type());
+  auto ifOp = builder.create<AffineIfOp>(
+    builder.getUnknownLoc(), set, ValueRange{i, j}, true);
+  builder.setInsertionPointToStart(&ifOp.getThenRegion().front());
+  // Create memory access
+  auto loadA = builder.create<AffineLoadOp>(
+    builder.getUnknownLoc(), A, ValueRange{i, j});
+  auto loadB = builder.create<AffineLoadOp>(
+    builder.getUnknownLoc(), B, ValueRange{i, j});
   auto mul = builder.create<arith::MulFOp>(
-      builder.getUnknownLoc(), a_load, const_val);
-  builder.create<affine::AffineStoreOp>(
-      builder.getUnknownLoc(), mul, B, ValueRange{i, j});
-  
-  builder.setInsertionPointToEnd(entry_block);
-  builder.create<func::ReturnOp>(builder.getUnknownLoc());
-  
-  module.push_back(func_op);
-  return func_op;
+    builder.getUnknownLoc(), loadA, loadB);
+  builder.create<AffineStoreOp>(
+    builder.getUnknownLoc(), mul, B, ValueRange{i, j});
+  builder.create<ReturnOp>(builder.getUnknownLoc());
+  return funcOp;
 }
 
 // AnalysisTestBase implementation
@@ -209,20 +221,23 @@ target::TargetCharacteristics SchedulingTestBase::createMockCPUTarget() {
   target::TargetCharacteristics target;
   target.type = target::TargetType::CPU;
   target.name = "MockCPU";
+  target.vendor = "Generic";
   target.compute_units = 8;
-  target.supports_vectorization = true;
-  target.max_work_group_size = 1;
+  target.max_work_group_size = 8;
   target.max_work_item_dimensions = 1;
-  target.supports_local_memory = false;
-  
-  // Add memory hierarchy
-  target::MemoryLevel l1;
+  target.max_work_item_sizes = {8};
+  target::TargetCharacteristics::MemoryInfo l1;
   l1.level = target::MemoryLevel::LOCAL;
   l1.size_bytes = 32 * 1024;
-  l1.latency_cycles = 1;
   l1.bandwidth_gb_per_s = 100.0;
+  l1.latency_cycles = 1;
   target.memory_hierarchy.push_back(l1);
-  
+  target.supports_double_precision = true;
+  target.supports_atomic_operations = true;
+  target.supports_vectorization = true;
+  target.supports_local_memory = true;
+  target.peak_compute_throughput = 100.0;
+  target.memory_coalescing_factor = 1.0;
   return target;
 }
 
@@ -237,14 +252,14 @@ target::TargetCharacteristics SchedulingTestBase::createMockGPUTarget() {
   target.supports_local_memory = true;
   
   // Add memory hierarchy
-  target::MemoryLevel shared;
+  target::TargetCharacteristics::MemoryInfo shared;
   shared.level = target::MemoryLevel::SHARED;
   shared.size_bytes = 48 * 1024;
   shared.latency_cycles = 1;
   shared.bandwidth_gb_per_s = 1000.0;
   target.memory_hierarchy.push_back(shared);
   
-  target::MemoryLevel global;
+  target::TargetCharacteristics::MemoryInfo global;
   global.level = target::MemoryLevel::GLOBAL;
   global.size_bytes = 8ULL * 1024 * 1024 * 1024; // 8GB
   global.latency_cycles = 400;
@@ -322,13 +337,17 @@ void PassTestBase::SetUp() {
   AutoPolyTestBase::SetUp();
 }
 
-LogicalResult PassTestBase::runPassOnFunction(Pass* pass, func::FuncOp funcOp) {
-  // This is a simplified implementation
-  // In practice would create proper pass manager
-  return success();
+LogicalResult PassTestBase::runPassOnFunction(Pass* pass, FuncOp funcOp) {
+  ModuleOp moduleOp = funcOp->getParentOfType<ModuleOp>();
+  if (!moduleOp) {
+    return failure();
+  }
+  mlir::PassManager pm(moduleOp.getContext());
+  pm.addPass(std::unique_ptr<mlir::Pass>(pass));
+  return pm.run(moduleOp);
 }
 
-bool PassTestBase::wasModified(func::FuncOp before, func::FuncOp after) {
+bool PassTestBase::wasModified(FuncOp before, FuncOp after) {
   // Simple comparison based on operation count
   int before_count = 0, after_count = 0;
   
@@ -349,29 +368,29 @@ bool hasAttribute(Operation* op, const std::string& attr_name) {
   return op->hasAttr(attr_name);
 }
 
-int countLoops(func::FuncOp funcOp) {
+int countLoops(FuncOp funcOp) {
   int count = 0;
-  funcOp.walk([&](affine::AffineForOp) { count++; });
+  funcOp.walk([&](AffineForOp) { count++; });
   return count;
 }
 
-int countParallelLoops(func::FuncOp funcOp) {
+int countParallelLoops(FuncOp funcOp) {
   int count = 0;
-  funcOp.walk([&](affine::AffineParallelOp) { count++; });
+  funcOp.walk([&](AffineParallelOp) { count++; });
   return count;
 }
 
-std::vector<int> extractTileSizes(func::FuncOp funcOp) {
+std::vector<int> extractTileSizes(FuncOp funcOp) {
   std::vector<int> tile_sizes;
   // Simplified implementation - would extract from attributes
   return tile_sizes;
 }
 
-bool isParallelized(func::FuncOp funcOp) {
+bool isParallelized(FuncOp funcOp) {
   return countParallelLoops(funcOp) > 0;
 }
 
-bool isFused(func::FuncOp funcOp) {
+bool isFused(FuncOp funcOp) {
   // Simplified check - look for fusion attributes
   bool has_fusion = false;
   funcOp.walk([&](Operation* op) {
@@ -402,7 +421,6 @@ target::TargetCharacteristics MockTargetDetector::getDefaultTarget() {
   if (!mock_targets_.empty()) {
     return mock_targets_[0];
   }
-  
   // Return mock CPU target as default
   target::TargetCharacteristics default_target;
   default_target.type = target::TargetType::CPU;

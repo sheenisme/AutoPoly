@@ -61,3 +61,16 @@ func.func @rectangular_tiling(%A: memref<2048x512xf32>, %B: memref<512xf32>) {
 // CHECK:   affine.for %{{.*}} = 0 to 512 step {{[0-9]+}}
 // CHECK:     affine.for %{{.*}} = max(0, %{{.*}}) to min(2048, %{{.*}} + {{[0-9]+}})
 // CHECK:       affine.for %{{.*}} = max(0, %{{.*}}) to min(512, %{{.*}} + {{[0-9]+}})
+
+// RUN: autopoly-mlir-opt %s -autopoly-scheduling="enable-tiling=true tile-sizes=16" -o - | FileCheck %s
+
+func.func @tiling_test(%A: memref<128xf32>) {
+  affine.for %i = 0 to 128 {
+    %v = affine.load %A[%i] : memref<128xf32>
+    affine.store %v, %A[%i] : memref<128xf32>
+  }
+  return
+}
+
+// CHECK: affine.for
+// CHECK: step 16

@@ -1,4 +1,5 @@
 // RUN: autopoly-mlir-opt %s -dependence-analysis -verify-diagnostics | FileCheck %s
+// RUN: autopoly-mlir-opt %s -autopoly-dependence-analysis -o /dev/null | FileCheck %s
 
 // Test RAW (Read-After-Write) dependence analysis
 func.func @raw_dependence(%A: memref<100xf32>) {
@@ -98,3 +99,15 @@ func.func @reduction_pattern(%A: memref<1000xf32>, %sum: memref<1xf32>) {
 // CHECK: Reduction dependence detected
 // CHECK: Reduction variable: sum
 // CHECK: Can be parallelized with reduction support
+
+func.func @dep_test(%A: memref<64xf32>, %B: memref<64xf32>) {
+  affine.for %i = 0 to 64 {
+    %a = affine.load %A[%i] : memref<64xf32>
+    affine.store %a, %B[%i] : memref<64xf32>
+  }
+  return
+}
+
+// CHECK: RAW
+// CHECK: WAR
+// CHECK: WAW

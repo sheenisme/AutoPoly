@@ -86,3 +86,13 @@ func.func @parallel_tiled_computation(%A: memref<1024x1024xf32>, %B: memref<1024
 // CHECK:         %{{.*}} = affine.load %{{.*}}[%{{.*}}, %{{.*}}]
 // CHECK:         %{{.*}} = math.sin %{{.*}}
 // CHECK:         affine.store %{{.*}}, %{{.*}}[%{{.*}}, %{{.*}}]
+
+func.func @par_test(%A: memref<64xf32>) {
+  affine.for %i = 0 to 64 {
+    %v = affine.load %A[%i] : memref<64xf32>
+    affine.store %v, %A[%i] : memref<64xf32>
+  }
+  return
+}
+
+// CHECK: affine.parallel
