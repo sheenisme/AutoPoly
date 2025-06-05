@@ -2,12 +2,6 @@
 
 add_mlir_library(AutoPolyScheduling
   SchedulingStrategy.cpp
-  SchedulingStrategyManager.cpp
-  # CPUSchedulingStrategy.cpp
-  # GPUSchedulingStrategy.cpp
-  # OpenCLSchedulingStrategy.cpp
-  # FPGASchedulingStrategy.cpp
-  # SchedulingUtils.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${AUTOPOLY_SOURCE_DIR}/include/AutoPoly/Scheduling

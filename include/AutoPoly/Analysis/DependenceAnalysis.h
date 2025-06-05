@@ -113,6 +113,12 @@ public:
   
   /// Get the minimum tiling factor required for correctness
   std::vector<int> getMinimumTilingSizes() const;
+  
+  /// 
+  bool canFuse(const std::string& stmtA, const std::string& stmtB) const;
+  
+  /// 
+  bool hasLoopCarriedDependences() const;
 
 private:
   isl_ctx* ctx_;

@@ -509,5 +509,402 @@ std::vector<int> SchedulingUtils::calculateOptimalTileSizes(
   return tile_sizes;
 }
 
+// Implementation of NPUSchedulingStrategy
+bool NPUSchedulingStrategy::isSuitableForTarget(const target::TargetCharacteristics& target) const {
+  return target.type == target::TargetType::NPU;
+}
+
+SchedulingParameters NPUSchedulingStrategy::getParameters(
+    const target::TargetCharacteristics& target) const {
+  
+  SchedulingParameters params;
+  
+  // NPU matrix-operation friendly tiling
+  params.enable_tiling = true;
+  if (params.tile_sizes.empty()) {
+    // NPU typically prefers larger, matrix-friendly tile sizes
+    int matrix_size = 64; // Common NPU matrix unit size
+    params.tile_sizes = {matrix_size, matrix_size, 1};
+  }
+  
+  // Limited parallelization (NPU handles internally)
+  params.enable_nested_parallelism = false;
+  params.max_parallel_depth = 1;
+  
+  params.parallel_dimensions = {0}; // Single level, let NPU handle internally
+  
+  // Aggressive fusion for NPU efficiency
+  params.enable_loop_fusion = true;
+  params.fusion_strategy = 1; // Maximal fusion
+  
+  // No unrolling needed (NPU handles vectorization)
+  params.enable_unrolling = false;
+  params.unroll_factors = {1, 1, 1};
+  
+  // No skewing needed for NPU
+  params.enable_skewing = false;
+  
+  // Array privatization can help with data layout
+  params.enable_array_privatization = true;
+  params.enable_copy_optimization = true;
+  
+  // NPU-specific parameters
+  params.target_specific_params["matrix_unit_size"] = 64;
+  params.target_specific_params["prefer_dense_operations"] = 1;
+  params.target_specific_params["enable_quantization"] = 1;
+  params.target_specific_params["tensor_layout_optimization"] = 1;
+  
+  return params;
+}
+
+SchedulingAlgorithm NPUSchedulingStrategy::getPrimaryAlgorithm() const {
+  return SchedulingAlgorithm::CUSTOM; // NPU often needs custom algorithms
+}
+
+std::vector<OptimizationTechnique> NPUSchedulingStrategy::getOptimizationTechniques() const {
+  return {
+    OptimizationTechnique::TILING,
+    OptimizationTechnique::FUSION,
+    OptimizationTechnique::PRIVATIZATION
+  };
+}
+
+double NPUSchedulingStrategy::calculatePriority(const target::TargetCharacteristics& target) const {
+  if (target.type != target::TargetType::NPU) return 0.0;
+  
+  // High priority for NPU (specialized for NN operations)
+  double priority = 9.0;
+  
+  priority += std::log2(std::max(1, target.compute_units)) * 0.1;
+  
+  return priority;
+}
+
+// Implementation of DPUSchedulingStrategy
+bool DPUSchedulingStrategy::isSuitableForTarget(const target::TargetCharacteristics& target) const {
+  return target.type == target::TargetType::DPU;
+}
+
+SchedulingParameters DPUSchedulingStrategy::getParameters(
+    const target::TargetCharacteristics& target) const {
+  
+  SchedulingParameters params;
+  
+  // DPU tasklet-friendly tiling
+  params.enable_tiling = true;
+  if (params.tile_sizes.empty()) {
+    // DPU prefers smaller tiles due to memory constraints
+    params.tile_sizes = {32, 32, 1};
+  }
+  
+  // Moderate parallelization (DPU has multiple tasklets)
+  params.enable_nested_parallelism = true;
+  params.max_parallel_depth = 2;
+  
+  params.parallel_dimensions = {0, 1};
+  
+  // Conservative fusion for DPU
+  params.enable_loop_fusion = true;
+  params.fusion_strategy = 0; // Greedy fusion
+  
+  // Minimal unrolling due to memory constraints
+  params.enable_unrolling = false;
+  params.unroll_factors = {1, 1, 1};
+  
+  // No skewing for DPU
+  params.enable_skewing = false;
+  
+  // Array privatization important for DPU
+  params.enable_array_privatization = true;
+  params.enable_copy_optimization = true;
+  
+  // DPU-specific parameters
+  params.target_specific_params["tasklet_count"] = target.compute_units;
+  params.target_specific_params["mram_access_optimization"] = 1;
+  params.target_specific_params["wram_size"] = 64 * 1024; // 64KB WRAM typical
+  params.target_specific_params["enable_dma_optimization"] = 1;
+  
+  return params;
+}
+
+SchedulingAlgorithm DPUSchedulingStrategy::getPrimaryAlgorithm() const {
+  return SchedulingAlgorithm::ISL_SCHEDULER; // ISL can handle DPU constraints
+}
+
+std::vector<OptimizationTechnique> DPUSchedulingStrategy::getOptimizationTechniques() const {
+  return {
+    OptimizationTechnique::TILING,
+    OptimizationTechnique::PARALLELIZATION,
+    OptimizationTechnique::PRIVATIZATION
+  };
+}
+
+double DPUSchedulingStrategy::calculatePriority(const target::TargetCharacteristics& target) const {
+  if (target.type != target::TargetType::DPU) return 0.0;
+  
+  // Moderate priority for DPU
+  double priority = 7.5;
+  
+  priority += std::log2(std::max(1, target.compute_units)) * 0.2;
+  
+  return priority;
+}
+
+// Implementation of PIMSchedulingStrategy
+bool PIMSchedulingStrategy::isSuitableForTarget(const target::TargetCharacteristics& target) const {
+  return target.type == target::TargetType::PIM;
+}
+
+SchedulingParameters PIMSchedulingStrategy::getParameters(
+    const target::TargetCharacteristics& target) const {
+  
+  SchedulingParameters params;
+  
+  // PIM in-memory computation friendly tiling
+  params.enable_tiling = true;
+  if (params.tile_sizes.empty()) {
+    // PIM prefers tiles that minimize data movement
+    params.tile_sizes = {128, 128, 1};
+  }
+  
+  // Limited parallelization (PIM units work independently)
+  params.enable_nested_parallelism = false;
+  params.max_parallel_depth = 1;
+  
+  params.parallel_dimensions = {0};
+  
+  // Aggressive fusion to minimize memory traffic
+  params.enable_loop_fusion = true;
+  params.fusion_strategy = 1; // Maximal fusion
+  
+  // No unrolling needed
+  params.enable_unrolling = false;
+  params.unroll_factors = {1, 1, 1};
+  
+  // Skewing can help with data layout
+  params.enable_skewing = true;
+  
+  // Array privatization very important for PIM
+  params.enable_array_privatization = true;
+  params.enable_copy_optimization = true;
+  
+  // PIM-specific parameters
+  params.target_specific_params["in_memory_compute_units"] = target.compute_units;
+  params.target_specific_params["minimize_data_movement"] = 1;
+  params.target_specific_params["memory_compute_ratio"] = 4; // 4:1 memory to compute
+  params.target_specific_params["enable_analog_compute"] = 1;
+  
+  return params;
+}
+
+SchedulingAlgorithm PIMSchedulingStrategy::getPrimaryAlgorithm() const {
+  return SchedulingAlgorithm::CUSTOM; // PIM often needs specialized algorithms
+}
+
+std::vector<OptimizationTechnique> PIMSchedulingStrategy::getOptimizationTechniques() const {
+  return {
+    OptimizationTechnique::TILING,
+    OptimizationTechnique::FUSION,
+    OptimizationTechnique::SKEWING,
+    OptimizationTechnique::PRIVATIZATION
+  };
+}
+
+double PIMSchedulingStrategy::calculatePriority(const target::TargetCharacteristics& target) const {
+  if (target.type != target::TargetType::PIM) return 0.0;
+  
+  // High priority for PIM (very efficient for certain workloads)
+  double priority = 8.5;
+  
+  priority += std::log2(std::max(1, target.compute_units)) * 0.1;
+  
+  return priority;
+}
+
+// Implementation of CGRASchedulingStrategy
+bool CGRASchedulingStrategy::isSuitableForTarget(const target::TargetCharacteristics& target) const {
+  return target.type == target::TargetType::CGRA;
+}
+
+SchedulingParameters CGRASchedulingStrategy::getParameters(
+    const target::TargetCharacteristics& target) const {
+  
+  SchedulingParameters params;
+  
+  // CGRA spatial mapping friendly tiling
+  params.enable_tiling = true;
+  if (params.tile_sizes.empty()) {
+    // CGRA prefers tiles that match the spatial array size
+    int array_size = static_cast<int>(std::sqrt(target.compute_units));
+    params.tile_sizes = {array_size, array_size, 1};
+  }
+  
+  // Limited parallelization (CGRA handles spatial mapping)
+  params.enable_nested_parallelism = false;
+  params.max_parallel_depth = 1;
+  
+  params.parallel_dimensions = {0};
+  
+  // Moderate fusion for CGRA
+  params.enable_loop_fusion = true;
+  params.fusion_strategy = 0; // Greedy fusion
+  
+  // High unrolling for spatial mapping
+  params.enable_unrolling = true;
+  params.unroll_factors = {1, 1, 4}; // Unroll inner loops for spatial mapping
+  
+  // Skewing important for CGRA data flow
+  params.enable_skewing = true;
+  
+  // Array privatization helps with spatial mapping
+  params.enable_array_privatization = true;
+  params.enable_copy_optimization = true;
+  
+  // CGRA-specific parameters
+  params.target_specific_params["pe_array_width"] = static_cast<int>(std::sqrt(target.compute_units));
+  params.target_specific_params["pe_array_height"] = static_cast<int>(std::sqrt(target.compute_units));
+  params.target_specific_params["enable_spatial_mapping"] = 1;
+  params.target_specific_params["dataflow_optimization"] = 1;
+  
+  return params;
+}
+
+SchedulingAlgorithm CGRASchedulingStrategy::getPrimaryAlgorithm() const {
+  return SchedulingAlgorithm::FEAUTRIER; // Feautrier good for spatial architectures
+}
+
+std::vector<OptimizationTechnique> CGRASchedulingStrategy::getOptimizationTechniques() const {
+  return {
+    OptimizationTechnique::TILING,
+    OptimizationTechnique::UNROLLING,
+    OptimizationTechnique::SKEWING,
+    OptimizationTechnique::PRIVATIZATION
+  };
+}
+
+double CGRASchedulingStrategy::calculatePriority(const target::TargetCharacteristics& target) const {
+  if (target.type != target::TargetType::CGRA) return 0.0;
+  
+  // Moderate priority for CGRA
+  double priority = 7.0;
+  
+  priority += std::log2(std::max(1, target.compute_units)) * 0.15;
+  
+  return priority;
+}
+
+// Implementation of SchedulingStrategyManager
+SchedulingStrategyManager::SchedulingStrategyManager() {
+  registerStrategy(std::make_unique<CPUSchedulingStrategy>());
+  registerStrategy(std::make_unique<GPUSchedulingStrategy>());
+  registerStrategy(std::make_unique<OpenCLSchedulingStrategy>());
+  registerStrategy(std::make_unique<FPGASchedulingStrategy>());
+  registerStrategy(std::make_unique<NPUSchedulingStrategy>());
+  registerStrategy(std::make_unique<DPUSchedulingStrategy>());
+  registerStrategy(std::make_unique<PIMSchedulingStrategy>());
+  registerStrategy(std::make_unique<CGRASchedulingStrategy>());
+}
+
+void SchedulingStrategyManager::registerStrategy(std::unique_ptr<SchedulingStrategy> strategy) {
+  strategies_.push_back(std::move(strategy));
+}
+
+std::unique_ptr<SchedulingStrategy> SchedulingStrategyManager::selectStrategy(
+    const target::TargetCharacteristics& target) const {
+  
+  SchedulingStrategy* best_strategy = nullptr;
+  double best_priority = 0.0;
+  
+  // Find the strategy with highest priority for this target
+  for (const auto& strategy : strategies_) {
+    if (strategy->isSuitableForTarget(target)) {
+      double priority = strategy->calculatePriority(target);
+      if (priority > best_priority) {
+        best_priority = priority;
+        best_strategy = strategy.get();
+      }
+    }
+  }
+  
+  if (!best_strategy) {
+    LLVM_DEBUG(llvm::dbgs() << "No suitable scheduling strategy found for target\n");
+    return nullptr;
+  }
+  
+  // Clone the best strategy (simplified approach for now)
+  if (dynamic_cast<const CPUSchedulingStrategy*>(best_strategy)) {
+    return std::make_unique<CPUSchedulingStrategy>();
+  } else if (dynamic_cast<const GPUSchedulingStrategy*>(best_strategy)) {
+    return std::make_unique<GPUSchedulingStrategy>();
+  } else if (dynamic_cast<const OpenCLSchedulingStrategy*>(best_strategy)) {
+    return std::make_unique<OpenCLSchedulingStrategy>();
+  } else if (dynamic_cast<const FPGASchedulingStrategy*>(best_strategy)) {
+    return std::make_unique<FPGASchedulingStrategy>();
+  } else if (dynamic_cast<const NPUSchedulingStrategy*>(best_strategy)) {
+    return std::make_unique<NPUSchedulingStrategy>();
+  } else if (dynamic_cast<const DPUSchedulingStrategy*>(best_strategy)) {
+    return std::make_unique<DPUSchedulingStrategy>();
+  } else if (dynamic_cast<const PIMSchedulingStrategy*>(best_strategy)) {
+    return std::make_unique<PIMSchedulingStrategy>();
+  } else if (dynamic_cast<const CGRASchedulingStrategy*>(best_strategy)) {
+    return std::make_unique<CGRASchedulingStrategy>();
+  }
+  
+  return nullptr;
+}
+
+std::vector<std::unique_ptr<SchedulingStrategy>> SchedulingStrategyManager::getAllSuitableStrategies(
+    const target::TargetCharacteristics& target) const {
+  
+  std::vector<std::unique_ptr<SchedulingStrategy>> suitable_strategies;
+  
+  for (const auto& strategy : strategies_) {
+    if (strategy->isSuitableForTarget(target)) {
+      // Clone strategy (simplified approach for now)
+      if (dynamic_cast<const CPUSchedulingStrategy*>(strategy.get())) {
+        suitable_strategies.push_back(std::make_unique<CPUSchedulingStrategy>());
+      } else if (dynamic_cast<const GPUSchedulingStrategy*>(strategy.get())) {
+        suitable_strategies.push_back(std::make_unique<GPUSchedulingStrategy>());
+      } else if (dynamic_cast<const OpenCLSchedulingStrategy*>(strategy.get())) {
+        suitable_strategies.push_back(std::make_unique<OpenCLSchedulingStrategy>());
+      } else if (dynamic_cast<const FPGASchedulingStrategy*>(strategy.get())) {
+        suitable_strategies.push_back(std::make_unique<FPGASchedulingStrategy>());
+      } else if (dynamic_cast<const NPUSchedulingStrategy*>(strategy.get())) {
+        suitable_strategies.push_back(std::make_unique<NPUSchedulingStrategy>());
+      } else if (dynamic_cast<const DPUSchedulingStrategy*>(strategy.get())) {
+        suitable_strategies.push_back(std::make_unique<DPUSchedulingStrategy>());
+      } else if (dynamic_cast<const PIMSchedulingStrategy*>(strategy.get())) {
+        suitable_strategies.push_back(std::make_unique<PIMSchedulingStrategy>());
+      } else if (dynamic_cast<const CGRASchedulingStrategy*>(strategy.get())) {
+        suitable_strategies.push_back(std::make_unique<CGRASchedulingStrategy>());
+      }
+    }
+  }
+  
+  // Sort by priority (highest first)
+  std::sort(suitable_strategies.begin(), suitable_strategies.end(),
+    [&target](const std::unique_ptr<SchedulingStrategy>& a, 
+               const std::unique_ptr<SchedulingStrategy>& b) {
+      return a->calculatePriority(target) > b->calculatePriority(target);
+    });
+  
+  return suitable_strategies;
+}
+
+SchedulingParameters SchedulingStrategyManager::optimizeParameters(
+    const SchedulingParameters& base_params,
+    const target::TargetCharacteristics& target,
+    const analysis::PerformanceModel& perf_model) const {
+  
+  SchedulingParameters optimized = base_params;
+  
+  // TODO: Implement performance model-based optimization
+  // For now, return the base parameters without optimization
+  (void)perf_model; // Suppress unused parameter warning
+  (void)target;
+  
+  return optimized;
+}
+
 } // namespace scheduling
 } // namespace autopoly

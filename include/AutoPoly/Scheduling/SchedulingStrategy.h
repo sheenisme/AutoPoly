@@ -17,6 +17,13 @@
 #include <vector>
 #include <map>
 
+namespace autopoly {
+namespace analysis {
+  // Forward declaration
+  class PerformanceModel;
+}
+}
+
 // Forward declarations for ISL and PPCG
 struct isl_ctx;
 struct isl_schedule;
@@ -148,6 +155,50 @@ public:
   double calculatePriority(const target::TargetCharacteristics& target) const override;
 };
 
+/// NPU-specific scheduling strategy
+class NPUSchedulingStrategy : public SchedulingStrategy {
+public:
+  std::string getName() const override { return "NPU"; }
+  bool isSuitableForTarget(const target::TargetCharacteristics& target) const override;
+  SchedulingParameters getParameters(const target::TargetCharacteristics& target) const override;
+  SchedulingAlgorithm getPrimaryAlgorithm() const override;
+  std::vector<OptimizationTechnique> getOptimizationTechniques() const override;
+  double calculatePriority(const target::TargetCharacteristics& target) const override;
+};
+
+/// DPU-specific scheduling strategy
+class DPUSchedulingStrategy : public SchedulingStrategy {
+public:
+  std::string getName() const override { return "DPU"; }
+  bool isSuitableForTarget(const target::TargetCharacteristics& target) const override;
+  SchedulingParameters getParameters(const target::TargetCharacteristics& target) const override;
+  SchedulingAlgorithm getPrimaryAlgorithm() const override;
+  std::vector<OptimizationTechnique> getOptimizationTechniques() const override;
+  double calculatePriority(const target::TargetCharacteristics& target) const override;
+};
+
+/// PIM-specific scheduling strategy
+class PIMSchedulingStrategy : public SchedulingStrategy {
+public:
+  std::string getName() const override { return "PIM"; }
+  bool isSuitableForTarget(const target::TargetCharacteristics& target) const override;
+  SchedulingParameters getParameters(const target::TargetCharacteristics& target) const override;
+  SchedulingAlgorithm getPrimaryAlgorithm() const override;
+  std::vector<OptimizationTechnique> getOptimizationTechniques() const override;
+  double calculatePriority(const target::TargetCharacteristics& target) const override;
+};
+
+/// CGRA-specific scheduling strategy
+class CGRASchedulingStrategy : public SchedulingStrategy {
+public:
+  std::string getName() const override { return "CGRA"; }
+  bool isSuitableForTarget(const target::TargetCharacteristics& target) const override;
+  SchedulingParameters getParameters(const target::TargetCharacteristics& target) const override;
+  SchedulingAlgorithm getPrimaryAlgorithm() const override;
+  std::vector<OptimizationTechnique> getOptimizationTechniques() const override;
+  double calculatePriority(const target::TargetCharacteristics& target) const override;
+};
+
 /// Manager for scheduling strategies - implements strategy selection logic
 class SchedulingStrategyManager {
 public:
@@ -155,32 +206,26 @@ public:
   SchedulingStrategyManager();
   
   /// Destructor
-  ~SchedulingStrategyManager();
+  ~SchedulingStrategyManager() = default;
   
   /// Register a custom scheduling strategy
   void registerStrategy(std::unique_ptr<SchedulingStrategy> strategy);
   
   /// Select the best strategy for a given target
-  const SchedulingStrategy* selectStrategy(const target::TargetCharacteristics& target) const;
+  std::unique_ptr<SchedulingStrategy> selectStrategy(const target::TargetCharacteristics& target) const;
   
-  /// Get all available strategies
-  std::vector<const SchedulingStrategy*> getAllStrategies() const;
+  /// Get all suitable strategies for a target, sorted by priority
+  std::vector<std::unique_ptr<SchedulingStrategy>> getAllSuitableStrategies(
+      const target::TargetCharacteristics& target) const;
   
-  /// Get strategy by name
-  const SchedulingStrategy* getStrategyByName(const std::string& name) const;
-  
-  /// Force use of a specific strategy (for testing/debugging)
-  void forceStrategy(const std::string& name);
-  
-  /// Clear forced strategy selection
-  void clearForcedStrategy();
+  /// Optimize parameters using performance model feedback
+  SchedulingParameters optimizeParameters(
+      const SchedulingParameters& base_params,
+      const target::TargetCharacteristics& target,
+      const analysis::PerformanceModel& perf_model) const;
 
 private:
   std::vector<std::unique_ptr<SchedulingStrategy>> strategies_;
-  std::string forced_strategy_name_;
-  
-  /// Initialize built-in strategies
-  void initializeBuiltinStrategies();
 };
 
 /// Utility functions for scheduling strategies

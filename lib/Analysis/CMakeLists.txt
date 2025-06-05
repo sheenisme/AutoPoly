@@ -2,7 +2,7 @@
 add_mlir_library(AutoPolyAnalysis
   PolyhedralExtraction.cpp
   DependenceAnalysis.cpp
-  # PolyhedralUtils.cpp
+  PolyhedralUtils.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${AUTOPOLY_SOURCE_DIR}/include/AutoPoly/Analysis

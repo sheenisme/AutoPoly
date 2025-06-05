@@ -27,11 +27,11 @@ constexpr int DEFAULT_SCHEDULING_TIMEOUT = 60;
 constexpr bool SUPPORT_GPU = true;
 constexpr bool SUPPORT_OPENCL = true;
 constexpr bool SUPPORT_CPU = true;
-constexpr bool SUPPORT_FPGA = false;
-constexpr bool SUPPORT_CGRA = false;
-constexpr bool SUPPORT_NPU = false;
-constexpr bool SUPPORT_DPU = false;
-constexpr bool SUPPORT_PIM = false;
+constexpr bool SUPPORT_FPGA = true;
+constexpr bool SUPPORT_CGRA = true;
+constexpr bool SUPPORT_NPU = true;
+constexpr bool SUPPORT_DPU = true;
+constexpr bool SUPPORT_PIM = true;
 
 /// Feature flags for scheduling algorithms
 constexpr bool SUPPORT_ISL_SCHEDULING = true;

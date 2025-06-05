@@ -2,10 +2,6 @@
 
 add_mlir_library(AutoPolyCodeGen
   AffineCodeGeneration.cpp
-  # ParallelLoopOptimizer.cpp
-  # MemoryAccessOptimizer.cpp
-  # CodeVerifier.cpp
-  # CodeGenUtils.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${AUTOPOLY_SOURCE_DIR}/include/AutoPoly/CodeGen

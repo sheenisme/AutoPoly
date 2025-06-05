@@ -110,8 +110,10 @@ private:
 class PolyhedralAnalysisPass : public mlir::OperationPass<mlir::func::FuncOp> {
 public:
   PolyhedralAnalysisPass();
+
+  llvm::StringRef getArgument() const override { return "autopoly-polyhedral-analysis"; }
   
-  llvm::StringRef getName() const override { return "polyhedral-analysis"; }
+  llvm::StringRef getName() const override { return "autopoly-polyhedral-analysis"; }
   
   llvm::StringRef getDescription() const override {
     return "Extract and analyze polyhedral models from affine operations";
@@ -135,8 +137,10 @@ private:
 class DependenceAnalysisPass : public mlir::OperationPass<mlir::func::FuncOp> {
 public:
   DependenceAnalysisPass();
+
+  llvm::StringRef getArgument() const override { return "autopoly-dependence-analysis"; }
   
-  llvm::StringRef getName() const override { return "dependence-analysis"; }
+  llvm::StringRef getName() const override { return "autopoly-dependence-analysis"; }
   
   llvm::StringRef getDescription() const override {
     return "Perform polyhedral dependence analysis on affine operations";
@@ -160,8 +164,10 @@ private:
 class TargetDetectionPass : public mlir::OperationPass<mlir::ModuleOp> {
 public:
   TargetDetectionPass();
+
+  llvm::StringRef getArgument() const override { return "autopoly-target-detection"; }
   
-  llvm::StringRef getName() const override { return "target-detection"; }
+  llvm::StringRef getName() const override { return "autopoly-target-detection"; }
   
   llvm::StringRef getDescription() const override {
     return "Detect and characterize available target hardware";

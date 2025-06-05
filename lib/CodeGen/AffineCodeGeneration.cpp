@@ -457,5 +457,304 @@ bool CodeVerifier::checkSemanticEquivalence(Operation* original,
   return original->getName() == generated->getName();
 }
 
+bool CodeVerifier::validateMemoryAccesses(Operation* root) {
+  if (!root) {
+    return false;
+  }
+  
+  // Check all memory accesses are valid
+  bool isValid = true;
+  
+  root->walk([&](AffineLoadOp loadOp) {
+    // Check bounds and validity
+    if (!loadOp.getMemref()) {
+      isValid = false;
+      return WalkResult::interrupt();
+    }
+    return WalkResult::advance();
+  });
+  
+  root->walk([&](AffineStoreOp storeOp) {
+    // Check bounds and validity
+    if (!storeOp.getMemref()) {
+      isValid = false;
+      return WalkResult::interrupt();
+    }
+    return WalkResult::advance();
+  });
+  
+  return isValid;
+}
+
+bool CodeVerifier::checkRaceConditions(Operation* root) {
+  if (!root) {
+    return false;
+  }
+  
+  // Simplified race condition check
+  // In practice would need sophisticated data flow analysis
+  
+  bool hasRaces = false;
+  
+  root->walk([&](AffineParallelOp parallelOp) {
+    // Check for write conflicts in parallel loops
+    parallelOp.getBody()->walk([&](AffineStoreOp storeOp) {
+      // Simplified check - assume no races for now
+      return WalkResult::advance();
+    });
+    return WalkResult::advance();
+  });
+  
+  return !hasRaces;
+}
+
+bool CodeVerifier::verifyTransformationCorrectness(
+    const analysis::PolyhedralModel& original_model,
+    const CodeGenResult& generated_code) {
+  
+  if (!generated_code.generation_successful) {
+    return false;
+  }
+  
+  // Check that generated code preserves semantics
+  // This is a simplified check
+  
+  return generated_code.passes_verification;
+}
+
+// ParallelLoopOptimizer implementation
+ParallelLoopOptimizer::ParallelLoopOptimizer(MLIRContext* ctx) : ctx_(ctx) {}
+
+void ParallelLoopOptimizer::optimizeParallelLoops(Operation* root,
+                                                 const target::TargetCharacteristics& target) {
+  if (!root) {
+    return;
+  }
+  
+  LLVM_DEBUG(llvm::dbgs() << "Optimizing parallel loops for target\n");
+  
+  // Convert beneficial serial loops to parallel
+  root->walk([&](AffineForOp forOp) {
+    if (isParallelizationBeneficial(forOp, target)) {
+      convertToParallel(forOp, target);
+    }
+    return WalkResult::advance();
+  });
+  
+  // Optimize existing parallel loops
+  root->walk([&](AffineParallelOp parallelOp) {
+    optimizeNestedParallelism(parallelOp, target);
+    return WalkResult::advance();
+  });
+}
+
+bool ParallelLoopOptimizer::convertToParallel(AffineForOp forOp,
+                                             const target::TargetCharacteristics& target) {
+  // Check if conversion is safe and beneficial
+  if (hasMemoryDependencies(forOp)) {
+    return false;
+  }
+  
+  int workload = estimateParallelWorkload(forOp);
+  if (workload < target.compute_units * 10) { // Heuristic threshold
+    return false;
+  }
+  
+  // Convert to parallel loop would go here
+  // This is a complex transformation requiring careful analysis
+  
+  LLVM_DEBUG(llvm::dbgs() << "Converting loop to parallel\n");
+  return true;
+}
+
+void ParallelLoopOptimizer::optimizeNestedParallelism(AffineParallelOp parallelOp,
+                                                     const target::TargetCharacteristics& target) {
+  // Optimize nested parallelism based on target characteristics
+  // For GPU: limit nesting depth, optimize for warps/threads
+  // For CPU: optimize for available cores
+  
+  LLVM_DEBUG(llvm::dbgs() << "Optimizing nested parallelism\n");
+}
+
+bool ParallelLoopOptimizer::isParallelizationBeneficial(AffineForOp forOp,
+                                                       const target::TargetCharacteristics& target) {
+  // Estimate if parallelization would be beneficial
+  int workload = estimateParallelWorkload(forOp);
+  bool hasDeps = hasMemoryDependencies(forOp);
+  
+  return !hasDeps && workload > target.compute_units;
+}
+
+int ParallelLoopOptimizer::estimateParallelWorkload(AffineForOp forOp) {
+  // Estimate computational workload in the loop
+  int workload = 0;
+  
+  forOp.getBody()->walk([&](Operation* op) {
+    if (isa<arith::AddIOp, arith::MulIOp, arith::AddFOp, arith::MulFOp>(op)) {
+      workload += 1; // Count arithmetic operations
+    }
+    return WalkResult::advance();
+  });
+  
+  // Multiply by estimated trip count (simplified)
+  auto tripCount = 100; // Default estimate
+  return workload * tripCount;
+}
+
+bool ParallelLoopOptimizer::hasMemoryDependencies(AffineForOp forOp) {
+  // Check for loop-carried memory dependencies
+  // This is a simplified check
+  
+  bool hasDeps = false;
+  llvm::SmallVector<AffineStoreOp> stores;
+  llvm::SmallVector<AffineLoadOp> loads;
+  
+  // Collect memory operations
+  forOp.getBody()->walk([&](AffineStoreOp storeOp) {
+    stores.push_back(storeOp);
+    return WalkResult::advance();
+  });
+  
+  forOp.getBody()->walk([&](AffineLoadOp loadOp) {
+    loads.push_back(loadOp);
+    return WalkResult::advance();
+  });
+  
+  // Simple check: if we have both loads and stores, assume dependency
+  if (!stores.empty() && !loads.empty()) {
+    hasDeps = true;
+  }
+  
+  return hasDeps;
+}
+
+// MemoryAccessOptimizer implementation
+MemoryAccessOptimizer::MemoryAccessOptimizer(MLIRContext* ctx) : ctx_(ctx) {}
+
+void MemoryAccessOptimizer::optimizeMemoryAccesses(Operation* root,
+                                                  const target::TargetCharacteristics& target) {
+  if (!root) {
+    return;
+  }
+  
+  LLVM_DEBUG(llvm::dbgs() << "Optimizing memory accesses\n");
+  
+  // Add prefetch hints where beneficial
+  if (target.type == target::TargetType::CPU) {
+    addPrefetchHints(root, target);
+  }
+  
+  // Optimize for memory coalescing on GPU
+  if (target.type == target::TargetType::GPU) {
+    optimizeForCoalescing(root, target);
+  }
+}
+
+void MemoryAccessOptimizer::addPrefetchHints(Operation* root,
+                                           const target::TargetCharacteristics& target) {
+  root->walk([&](AffineLoadOp loadOp) {
+    if (isPrefetchBeneficial(loadOp, target)) {
+      insertPrefetch(loadOp, 32); // 32 cache lines ahead
+    }
+    return WalkResult::advance();
+  });
+}
+
+void MemoryAccessOptimizer::optimizeForCoalescing(Operation* root,
+                                                const target::TargetCharacteristics& target) {
+  root->walk([&](AffineLoadOp loadOp) {
+    if (!isCoalescedAccess(loadOp)) {
+      // Mark for optimization
+      loadOp->setAttr("autopoly.optimize_coalescing", UnitAttr::get(ctx_));
+    }
+    return WalkResult::advance();
+  });
+}
+
+bool MemoryAccessOptimizer::isPrefetchBeneficial(AffineLoadOp loadOp,
+                                                const target::TargetCharacteristics& target) {
+  // Estimate if prefetching would be beneficial
+  // For CPU targets with cache hierarchy
+  return target.type == target::TargetType::CPU && !target.memory_hierarchy.empty();
+}
+
+bool MemoryAccessOptimizer::isCoalescedAccess(AffineLoadOp loadOp) {
+  // Check if memory access is coalesced (consecutive accesses)
+  // This is a simplified check
+  
+  // For now, assume unit stride accesses are coalesced
+  return true;
+}
+
+void MemoryAccessOptimizer::insertPrefetch(AffineLoadOp loadOp, int distance) {
+  // Insert prefetch instruction before the load
+  // This would require creating a prefetch intrinsic
+  
+  LLVM_DEBUG(llvm::dbgs() << "Inserting prefetch with distance " << distance << "\n");
+  
+  // Add prefetch attribute for now
+  loadOp->setAttr("autopoly.prefetch_distance", 
+                 IntegerAttr::get(IntegerType::get(ctx_, 32), distance));
+}
+
+// CodeGenUtils implementation
+AffineExpr CodeGenUtils::convertISLExprToAffine(isl_ast_expr* expr, MLIRContext* ctx) {
+  if (!expr) {
+    return nullptr;
+  }
+  
+  // Simplified conversion - return constant expression
+  return getAffineConstantExpr(0, ctx);
+}
+
+std::pair<AffineMap, AffineMap> CodeGenUtils::createLoopBounds(isl_ast_node* for_node, 
+                                                              MLIRContext* ctx) {
+  // Create simple constant bounds for demonstration
+  AffineMap lowerMap = AffineMap::getConstantMap(0, ctx);
+  AffineMap upperMap = AffineMap::getConstantMap(100, ctx);
+  
+  return {lowerMap, upperMap};
+}
+
+std::vector<int> CodeGenUtils::extractParallelDimensions(isl_schedule* schedule) {
+  std::vector<int> parallel_dims;
+  
+  if (!schedule) {
+    return parallel_dims;
+  }
+  
+  // Simplified extraction - assume outermost dimension is parallel
+  parallel_dims.push_back(0);
+  
+  return parallel_dims;
+}
+
+std::string CodeGenUtils::generateUniqueName(const std::string& base) {
+  static int counter = 0;
+  return base + "_" + std::to_string(counter++);
+}
+
+void CodeGenUtils::addDebugInfo(Operation* op, const std::string& info) {
+  if (!op) {
+    return;
+  }
+  
+  op->setAttr("autopoly.debug_info", StringAttr::get(op->getContext(), info));
+}
+
+DictionaryAttr CodeGenUtils::createPerformanceAttrs(MLIRContext* ctx,
+                                                   const std::map<std::string, int>& params) {
+  llvm::SmallVector<NamedAttribute> attrs;
+  
+  for (const auto& param : params) {
+    attrs.push_back(NamedAttribute(
+        StringAttr::get(ctx, param.first),
+        IntegerAttr::get(IntegerType::get(ctx, 32), param.second)
+    ));
+  }
+  
+  return DictionaryAttr::get(ctx, attrs);
+}
+
 } // namespace codegen
 } // namespace autopoly

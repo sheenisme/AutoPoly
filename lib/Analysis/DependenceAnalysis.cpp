@@ -199,6 +199,30 @@ void DependenceInfo::computeCombinedDependenceMap() const {
   analysis_cache_valid_ = true;
 }
 
+
+bool DependenceInfo::canFuse(const std::string& stmtA, const std::string& stmtB) const {
+  // Simple fusion rule: no RAW/WAW dependence between A and B
+  for (const auto& dep : dependences_) {
+    if (((dep.source_statement == stmtA && dep.target_statement == stmtB) ||
+         (dep.source_statement == stmtB && dep.target_statement == stmtA)) &&
+        (dep.type == DependenceType::RAW || dep.type == DependenceType::WAW)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool DependenceInfo::hasLoopCarriedDependences() const {
+  for (const auto& dep : dependences_) {
+    for (const auto& vec : dep.distance_vectors) {
+      if (!vec.isLoopIndependent()) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 // DependenceAnalyzer implementation
 DependenceAnalyzer::DependenceAnalyzer(isl_ctx* ctx) : ctx_(ctx) {}
 

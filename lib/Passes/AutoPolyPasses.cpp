@@ -41,6 +41,8 @@
 #include <isl/constraint.h>
 #include <isl/options.h>
 
+#include <chrono>
+
 #define DEBUG_TYPE "autopoly-passes"
 
 using namespace mlir;
@@ -257,7 +259,7 @@ bool AutoPolySchedulingPass::transformFunction(func::FuncOp funcOp) {
   
   // Select scheduling strategy
   scheduling::SchedulingStrategyManager strategyManager;
-  const auto* strategy = strategyManager.selectStrategy(target);
+  auto strategy = strategyManager.selectStrategy(target);
   
   if (!strategy) {
     LLVM_DEBUG(llvm::dbgs() << "No suitable scheduling strategy found\n");
@@ -377,10 +379,201 @@ std::unique_ptr<Pass> createAutoPolySchedulingPass(const AutoPolyPassOptions& op
   return std::make_unique<AutoPolySchedulingPass>(options);
 }
 
+// PolyhedralAnalysisPass implementation
+PolyhedralAnalysisPass::PolyhedralAnalysisPass() 
+    : mlir::OperationPass<mlir::func::FuncOp>(mlir::TypeID::get<PolyhedralAnalysisPass>()) {}
+
+std::unique_ptr<mlir::Pass> PolyhedralAnalysisPass::clonePass() const {
+  return std::make_unique<PolyhedralAnalysisPass>();
+}
+
+void PolyhedralAnalysisPass::getDependentDialects(mlir::DialectRegistry& registry) const {
+  registry.insert<mlir::affine::AffineDialect, mlir::func::FuncDialect, mlir::arith::ArithDialect>();
+}
+
+void PolyhedralAnalysisPass::runOnOperation() {
+  func::FuncOp funcOp = getOperation();
+  
+  LLVM_DEBUG(llvm::dbgs() << "Running polyhedral analysis pass on function: " 
+                          << funcOp.getName() << "\n");
+  
+  analyzeAffineRegions(funcOp);
+  
+  if (enable_debug_output_) {
+    dumpPolyhedralModel(funcOp);
+  }
+}
+
+void PolyhedralAnalysisPass::analyzeAffineRegions(func::FuncOp funcOp) {
+  isl_ctx* ctx = analysis::PolyhedralUtils::createContext();
+  analysis::PolyhedralExtractor extractor(ctx);
+  
+  auto model = extractor.extractFromFunction(funcOp);
+  
+  if (model) {
+    LLVM_DEBUG(llvm::dbgs() << "Successfully extracted polyhedral model\n");
+    LLVM_DEBUG(llvm::dbgs() << "Number of statements: " << model->getStatements().size() << "\n");
+  } else {
+    LLVM_DEBUG(llvm::dbgs() << "Failed to extract polyhedral model\n");
+  }
+  
+  isl_ctx_free(ctx);
+}
+
+void PolyhedralAnalysisPass::dumpPolyhedralModel(func::FuncOp funcOp) {
+  llvm::outs() << "Polyhedral Analysis Results for function: " << funcOp.getName() << "\n";
+  llvm::outs() << "==========================================\n";
+  // Additional detailed output would go here
+}
+
+// DependenceAnalysisPass implementation
+DependenceAnalysisPass::DependenceAnalysisPass() 
+    : mlir::OperationPass<mlir::func::FuncOp>(mlir::TypeID::get<DependenceAnalysisPass>()) {}
+
+std::unique_ptr<mlir::Pass> DependenceAnalysisPass::clonePass() const {
+  return std::make_unique<DependenceAnalysisPass>();
+}
+
+void DependenceAnalysisPass::getDependentDialects(mlir::DialectRegistry& registry) const {
+  registry.insert<mlir::affine::AffineDialect, mlir::func::FuncDialect>();
+}
+
+void DependenceAnalysisPass::runOnOperation() {
+  func::FuncOp funcOp = getOperation();
+  
+  LLVM_DEBUG(llvm::dbgs() << "Running dependence analysis pass on function: " 
+                          << funcOp.getName() << "\n");
+  
+  analyzeDependences(funcOp);
+  
+  if (enable_debug_output_) {
+    dumpDependenceInformation(funcOp);
+  }
+}
+
+void DependenceAnalysisPass::analyzeDependences(func::FuncOp funcOp) {
+  isl_ctx* ctx = analysis::PolyhedralUtils::createContext();
+  
+  // Extract polyhedral model first
+  analysis::PolyhedralExtractor extractor(ctx);
+  auto model = extractor.extractFromFunction(funcOp);
+  
+  if (!model) {
+    LLVM_DEBUG(llvm::dbgs() << "Cannot perform dependence analysis without polyhedral model\n");
+    isl_ctx_free(ctx);
+    return;
+  }
+  
+  // Analyze dependences
+  analysis::DependenceAnalyzer analyzer(ctx);
+  auto dependences = analyzer.analyze(*model);
+  
+  if (dependences) {
+    LLVM_DEBUG(llvm::dbgs() << "Successfully analyzed dependences\n");
+    LLVM_DEBUG(llvm::dbgs() << "Number of dependences: " << dependences->getDependences().size() << "\n");
+  } else {
+    LLVM_DEBUG(llvm::dbgs() << "Failed to analyze dependences\n");
+  }
+  
+  isl_ctx_free(ctx);
+}
+
+void DependenceAnalysisPass::dumpDependenceInformation(func::FuncOp funcOp) {
+  llvm::outs() << "Dependence Analysis Results for function: " << funcOp.getName() << "\n";
+  llvm::outs() << "=========================================\n";
+  // Additional detailed output would go here
+}
+
+// TargetDetectionPass implementation
+TargetDetectionPass::TargetDetectionPass() 
+    : mlir::OperationPass<mlir::ModuleOp>(mlir::TypeID::get<TargetDetectionPass>()) {}
+
+std::unique_ptr<mlir::Pass> TargetDetectionPass::clonePass() const {
+  return std::make_unique<TargetDetectionPass>();
+}
+
+void TargetDetectionPass::runOnOperation() {
+  ModuleOp moduleOp = getOperation();
+  
+  LLVM_DEBUG(llvm::dbgs() << "Running target detection pass on module\n");
+  
+  detectTargets(moduleOp);
+  reportTargetInformation();
+}
+
+void TargetDetectionPass::detectTargets(ModuleOp moduleOp) {
+  auto detector = target::TargetDetectorFactory::createDetector();
+  auto targets = detector->detectTargets();
+  
+  g_pass_statistics.available_targets = targets.size();
+  
+  if (!targets.empty()) {
+    g_pass_statistics.detected_target_type = 
+        target::TargetUtils::targetTypeToString(targets[0].type);
+  }
+  
+  LLVM_DEBUG(llvm::dbgs() << "Detected " << targets.size() << " available targets\n");
+}
+
+void TargetDetectionPass::reportTargetInformation() {
+  llvm::outs() << "Target Detection Results:\n";
+  llvm::outs() << "========================\n";
+  llvm::outs() << "Available targets: " << g_pass_statistics.available_targets << "\n";
+  llvm::outs() << "Primary target type: " << g_pass_statistics.detected_target_type << "\n";
+}
+
+// AutoPolyPipelineBuilder implementation
+void AutoPolyPipelineBuilder::addAutoPolyPasses(PassManager& pm, const AutoPolyPassOptions& options) {
+  // Add analysis passes first
+  addAnalysisPasses(pm);
+  
+  // Add transformation passes
+  addTransformationPasses(pm, options);
+}
+
+void AutoPolyPipelineBuilder::addAnalysisPasses(PassManager& pm) {
+  pm.addPass(createTargetDetectionPass());
+  pm.addPass(createPolyhedralAnalysisPass());
+  pm.addPass(createDependenceAnalysisPass());
+}
+
+void AutoPolyPipelineBuilder::addTransformationPasses(PassManager& pm, const AutoPolyPassOptions& options) {
+  pm.addPass(createAutoPolySchedulingPass(options));
+}
+
+std::unique_ptr<PassManager> AutoPolyPipelineBuilder::createPipeline(MLIRContext* context,
+                                                                    const AutoPolyPassOptions& options) {
+  auto pm = std::make_unique<PassManager>(context);
+  addAutoPolyPasses(*pm, options);
+  return pm;
+}
+
+// Factory functions
+std::unique_ptr<Pass> createPolyhedralAnalysisPass() {
+  return std::make_unique<PolyhedralAnalysisPass>();
+}
+
+std::unique_ptr<Pass> createDependenceAnalysisPass() {
+  return std::make_unique<DependenceAnalysisPass>();
+}
+
+std::unique_ptr<Pass> createTargetDetectionPass() {
+  return std::make_unique<TargetDetectionPass>();
+}
+
 // Pass registration
 void registerAutoPolyPasses() {
   mlir::PassRegistration<AutoPolySchedulingPass> autoPolyPass(
       []() { return std::make_unique<AutoPolySchedulingPass>(); });
+  
+  mlir::PassRegistration<PolyhedralAnalysisPass> polyAnalysisPass(
+      []() { return std::make_unique<PolyhedralAnalysisPass>(); });
+  
+  mlir::PassRegistration<DependenceAnalysisPass> depAnalysisPass(
+      []() { return std::make_unique<DependenceAnalysisPass>(); });
+  
+  mlir::PassRegistration<TargetDetectionPass> targetDetectionPass(
+      []() { return std::make_unique<TargetDetectionPass>(); });
 }
 
 } // namespace passes

@@ -59,6 +59,7 @@ struct PolyhedralStatement {
   /// Performance hints
   int computational_intensity = 1;      ///< Relative computational cost
   std::vector<int> vectorizable_dimensions; ///< Dimensions suitable for vectorization
+  std::string getName() const { return name; }
 };
 
 /// Information about array accesses within the polyhedral model
@@ -195,6 +196,9 @@ public:
   /// Create an ISL context with appropriate options
   static isl_ctx* createContext();
   
+  /// Destroy an ISL context
+  static void destroyContext(isl_ctx* ctx);
+  
   /// Convert MLIR affine map to ISL map
   static isl_map* convertAffineMapToISL(mlir::AffineMap affineMap,
                                        isl_ctx* ctx);
@@ -217,6 +221,30 @@ public:
   
   /// Get the maximum loop depth in a region
   static int getMaxLoopDepth(mlir::Region& region);
+  
+  /// Check if function has affine loops
+  static bool hasAffineLoops(mlir::func::FuncOp funcOp);
+  
+  /// Get loop depth of a specific loop
+  static int getLoopDepth(mlir::affine::AffineForOp forOp);
+  
+  /// Get nested loops within a loop
+  static std::vector<mlir::affine::AffineForOp> getNestedLoops(mlir::affine::AffineForOp forOp);
+  
+  /// Check if loop nest is perfect
+  static bool isPerfectLoopNest(mlir::affine::AffineForOp forOp);
+  
+  /// Get statements within a loop
+  static std::vector<mlir::Operation*> getStatements(mlir::affine::AffineForOp forOp);
+  
+  /// Check if function has complex control flow
+  static bool hasComplexControl(mlir::func::FuncOp funcOp);
+  
+  /// Get operation signature string
+  static std::string getOperationSignature(mlir::Operation* op);
+  
+  /// Check if polyhedral model can be extracted from function
+  static bool canExtractPolyhedralModel(mlir::func::FuncOp funcOp);
 };
 
 } // namespace analysis
