@@ -148,10 +148,6 @@ include(ConfigPPCG)
 add_subdirectory(lib)
 add_subdirectory(tools)
 
-# Enable testing
-enable_testing()
-include(CTest)
-
 # Test options
 if(BUILD_TESTS)
     # Enable testing

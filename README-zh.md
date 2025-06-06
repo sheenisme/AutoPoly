@@ -2,14 +2,14 @@
 <h1 align="center">AutoPoly：面向MLIR的自动多面体调度框架</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/C++-17-success?logo=c%2B%2B" alt="C++17"/>
+  <img src="https://img.shields.io/badge/LLVM-18%2B-4CAF50?logo=llvm" alt="LLVM"/>
+  <img src="https://img.shields.io/badge/MLIR-Affine-4CAF50?logo=llvm&logoColor=white" alt="MLIR"/>
   <br>
-  <img src="https://img.shields.io/badge/LLVM-18%2B-success?logo=llvm" alt="LLVM"/>
+  <img src="https://img.shields.io/badge/PPCG-Supported-4CAF50?logo=gnu" alt="PPCG"/>
+  <img src="https://img.shields.io/badge/C++-17-4CAF50?logo=c%2B%2B" alt="C++17"/>
   <br>
-  <img src="https://img.shields.io/badge/MLIR-Affine-success?logo=llvm&logoColor=white" alt="MLIR" height="24"/>
-  <br>
-  <img src="https://img.shields.io/badge/PPCG-supported-success?logo=gnu" alt="PPCG"/>
-  <br>
+  <img src="https://img.shields.io/badge/License-Apache%202.0-4CAF50?logo=apache" alt="License"/>
+  <img src="https://img.shields.io/badge/CI-Passing-4CAF50?logo=github" alt="CI"/>
 </p>
 
 [🇬🇧 English](README.md) | [🇨🇳 中文](README-zh.md)
@@ -115,9 +115,6 @@ bash scripts/build.sh
 
 # 4. 运行测试
 ninja -C build check-autopoly
-
-# 5. （可选）安装
-bash scripts/install.sh
 ```
 
 > **提示：** build.sh 会自动检测指定目录下的LLVM（bin/llvm-config），如已存在则跳过重编译。CI也采用此机制缓存LLVM，避免重复编译。详见 [CI workflow](.github/workflows/ci.yml)。
@@ -208,7 +205,6 @@ func.func @matmul(%A: memref<1024x1024xf32>, %B: memref<1024x1024xf32>, %C: memr
 ## 🧑‍💻 开发与调试
 
 - <img src="https://img.icons8.com/ios-filled/20/000000/bug.png"/> **调试标志**：`export LLVM_DEBUG=autopoly-passes,polyhedral-extraction,scheduling-transform`
-- <img src="https://img.icons8.com/ios-filled/20/000000/console.png"/> **ISL调试**：`export ISL_DEBUG=1`
 - <img src="https://img.icons8.com/ios-filled/20/000000/speed.png"/> **性能分析**：`perf record ./build/bin/autopoly-mlir-opt --autopoly-scheduling input.mlir`
 - <img src="https://img.icons8.com/ios-filled/20/000000/memory-slot.png"/> **内存分析**：`valgrind --tool=massif ./build/bin/autopoly-mlir-opt input.mlir`
 - <img src="https://img.icons8.com/ios-filled/20/000000/code-file.png"/> **代码风格**：类（PascalCase）、函数（camelCase）、变量（snake_case）、常量（UPPER_SNAKE_CASE）
@@ -217,7 +213,7 @@ func.func @matmul(%A: memref<1024x1024xf32>, %B: memref<1024x1024xf32>, %C: memr
 
 ## 🤝 贡献指南
 
-欢迎贡献！详见 [CONTRIBUTING.md]，包括代码规范、测试与评审流程。
+欢迎贡献！详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ---
 
@@ -226,11 +222,11 @@ func.func @matmul(%A: memref<1024x1024xf32>, %B: memref<1024x1024xf32>, %C: memr
 如在学术研究中使用AutoPoly，请引用：
 
 ```bibtex
-@inproceedings{autopoly2024,
-  title={AutoPoly: Automatic Polyhedral Scheduling for MLIR},
-  author={Your Name},
-  booktitle={Proceedings of ...},
-  year={2024}
+@inproceedings{autopoly2025,
+  title={AutoPoly: Automatic Polyhedral Scheduling Framework for MLIR},
+  author={Guanghui Song},
+  url={https://github.com/sheenisme/AutoPoly.git},
+  year={2025}
 }
 ```
 

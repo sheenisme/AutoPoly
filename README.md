@@ -1,16 +1,16 @@
 
 
-<h1 align="center">AutoPoly: Automatic Polyhedral Scheduling Framework for MLIR </h1>
+<h1 align="center">AutoPoly: Automatic Polyhedral Scheduling Framework for MLIR</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/C++-17-success?logo=c%2B%2B" alt="C++17"/>
+  <img src="https://img.shields.io/badge/LLVM-18%2B-4CAF50?logo=llvm" alt="LLVM"/>
+  <img src="https://img.shields.io/badge/MLIR-Affine-4CAF50?logo=llvm&logoColor=white" alt="MLIR"/>
   <br>
-  <img src="https://img.shields.io/badge/LLVM-18%2B-success?logo=llvm" alt="LLVM"/>
+  <img src="https://img.shields.io/badge/PPCG-Supported-4CAF50?logo=gnu" alt="PPCG"/>
+  <img src="https://img.shields.io/badge/C++-17-4CAF50?logo=c%2B%2B" alt="C++17"/>
   <br>
-  <img src="https://img.shields.io/badge/MLIR-Affine-success?logo=llvm&logoColor=white" alt="MLIR" height="24"/>
-  <br>
-  <img src="https://img.shields.io/badge/PPCG-supported-success?logo=gnu" alt="PPCG"/>
-  <br>
+  <img src="https://img.shields.io/badge/License-Apache%202.0-4CAF50?logo=apache" alt="License"/>
+  <img src="https://img.shields.io/badge/CI-Passing-4CAF50?logo=github" alt="CI"/>
 </p>
 
 [🇬🇧 English](README.md) | [🇨🇳 中文](README-zh.md)
@@ -37,16 +37,16 @@ AutoPoly implements a three-level separation architecture:
 <summary>Textual Architecture Diagram</summary>
 
 ```
-┌───────────────┐   ┌────────────────────┐   ┌────────────────────┐
-│ Target        │   │ Scheduling         │   │ Scheduling         │
-│ Detection     │-->| Strategy Selection │-->| Algorithm          │
-└───────────────┘   └────────────────────┘   └────────────────────┘
+┌────────────────┐   ┌────────────────────┐   ┌────────────────────┐
+│ Target         │   │ Scheduling         │   │ Scheduling         │
+│ Detection      │-->| Strategy Selection │-->| Algorithm          │
+└────────────────┘   └────────────────────┘   └────────────────────┘
         │                    │                        │
         ▼                    ▼                        ▼
-┌───────────────┐   ┌────────────────────┐   ┌────────────────────┐
-│ Hardware      │   │ Target-Specific    │   │ ISL, Feautrier,    │
-│ Characteristics│  │ Optimization Params│   │ PLUTO, PPCG, ...   │
-└───────────────┘   └────────────────────┘   └────────────────────┘
+┌────────────────┐   ┌────────────────────┐   ┌────────────────────┐
+│ Hardware       │   │ Target-Specific    │   │ ISL, Feautrier,    │
+│ Characteristics│   │ Optimization Params│   │ PLUTO, PPCG, ...   │
+└────────────────┘   └────────────────────┘   └────────────────────┘
 ```
 
 ### 📁 Project Structure
@@ -118,9 +118,6 @@ bash scripts/build.sh
 
 # 4. Run tests
 ninja -C build check-autopoly
-
-# 5. (Optional) Install
-bash scripts/install.sh
 ```
 
 > **Tip:** The build system will automatically detect and reuse an existing LLVM build (bin/llvm-config) in the specified directory, avoiding unnecessary recompilation. This is also used in CI for caching. See [CI workflow](.github/workflows/ci.yml) for details.
@@ -211,7 +208,6 @@ func.func @matmul(%A: memref<1024x1024xf32>, %B: memref<1024x1024xf32>, %C: memr
 ## 🧑‍💻 Development & Debugging
 
 - <img src="https://img.icons8.com/ios-filled/20/000000/bug.png"/> **Debug flags**: `export LLVM_DEBUG=autopoly-passes,polyhedral-extraction,scheduling-transform`
-- <img src="https://img.icons8.com/ios-filled/20/000000/console.png"/> **ISL debug**: `export ISL_DEBUG=1`
 - <img src="https://img.icons8.com/ios-filled/20/000000/speed.png"/> **Performance profiling**: `perf record ./build/bin/autopoly-mlir-opt --autopoly-scheduling input.mlir`
 - <img src="https://img.icons8.com/ios-filled/20/000000/memory-slot.png"/> **Memory profiling**: `valgrind --tool=massif ./build/bin/autopoly-mlir-opt input.mlir`
 - <img src="https://img.icons8.com/ios-filled/20/000000/code-file.png"/> **Code style**: Classes (PascalCase), functions (camelCase), variables (snake_case), constants (UPPER_SNAKE_CASE)
@@ -220,7 +216,7 @@ func.func @matmul(%A: memref<1024x1024xf32>, %B: memref<1024x1024xf32>, %C: memr
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md] for details on code style, testing, and review process.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ---
 
@@ -229,11 +225,11 @@ We welcome contributions! Please see [CONTRIBUTING.md] for details on code style
 If you use AutoPoly in your research, please cite:
 
 ```bibtex
-@inproceedings{autopoly2024,
-  title={AutoPoly: Automatic Polyhedral Scheduling for MLIR},
-  author={Your Name},
-  booktitle={Proceedings of ...},
-  year={2024}
+@inproceedings{autopoly2025,
+  title={AutoPoly: Automatic Polyhedral Scheduling Framework for MLIR},
+  author={Guanghui Song},
+  url={https://github.com/sheenisme/AutoPoly.git},
+  year={2025}
 }
 ```
 
