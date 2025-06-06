@@ -1,6 +1,7 @@
-//===- AutoPolyPasses.cpp - AutoPoly MLIR Passes --------------*- C++ -*-===//
+//===- AutoPolyPasses.cpp - AutoPoly Passes Implementation ----------------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
 // This file implements MLIR passes for the AutoPoly polyhedral scheduling
 // framework, providing automatic scheduling transformations for affine

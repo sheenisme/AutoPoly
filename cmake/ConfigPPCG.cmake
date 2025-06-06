@@ -1,5 +1,7 @@
 # ============================================================================
 # PPCG Library Configuration (Always built from source)
+# Copyright (c) 2025 AutoPoly Contributors
+# SPDX-License-Identifier: Apache-2.0
 # ============================================================================
 # PPCG (Polyhedral Parallel Code Generator) is the core library for this project.
 # It transforms C code to parallel code using the polyhedral model.

@@ -1,6 +1,7 @@
-//===- DependenceAnalysis.h - Polyhedral Dependence Analysis -*- C++ -*-===//
+//===- DependenceAnalysis.h - Polyhedral Dependence Analysis --------------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
 // This file defines the dependence analysis framework for polyhedral models,
 // including data dependences, memory dependences, and other constraints

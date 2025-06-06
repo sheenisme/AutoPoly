@@ -1,5 +1,7 @@
 # ============================================================================
 # ISL Library Configuration
+# Copyright (c) 2025 AutoPoly Contributors
+# SPDX-License-Identifier: Apache-2.0
 # ============================================================================
 # ISL (Integer Set Library) is a library for manipulating sets and relations of integer points
 # bounded by linear constraints. It's a core dependency for PPCG and PET.

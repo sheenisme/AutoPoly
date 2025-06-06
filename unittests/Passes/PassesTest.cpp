@@ -1,3 +1,12 @@
+//===- PassesTest.cpp - Unit Test -----------------------------------------===//
+//
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
+//
+// This file contains unit tests for the AutoPoly passes framework.
+//
+//===----------------------------------------------------------------------===//
+
 #include "gtest/gtest.h"
 #include "AutoPoly/Passes/AutoPolyPasses.h"
 #include "TestUtils.h"

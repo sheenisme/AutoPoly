@@ -1,3 +1,12 @@
+//===- TargetDetectorTest.cpp - Target Detection Test ---------------------===//
+//
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
+//
+// This file implements the test for the target detection framework.
+//
+//===----------------------------------------------------------------------===//
+
 #include "gtest/gtest.h"
 #include "AutoPoly/Target/TargetInfo.h"
 #include "TestUtils.h"

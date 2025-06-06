@@ -1,5 +1,7 @@
 # ============================================================================
 # PET Library Configuration
+# Copyright (c) 2025 AutoPoly Contributors
+# SPDX-License-Identifier: Apache-2.0
 # ============================================================================
 # PET (Polyhedral Extraction Tool) is a library for extracting polyhedral models from C source code.
 # It uses Clang for parsing C code and provides a polyhedral representation that can be used by PPCG.

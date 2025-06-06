@@ -1,6 +1,7 @@
-//===- ppcg_wrapper.h - PPCG Wrapper Interface ----------------*- C -*-===//
+//===- ppcg_wrapper.h - PPCG Wrapper Interface ----------------------------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
 // This file declares the interface to the PPCG wrapper for C code optimization.
 //

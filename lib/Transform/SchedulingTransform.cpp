@@ -1,6 +1,7 @@
-//===- SchedulingTransform.cpp - Polyhedral Scheduling Transforms -*- C++ -*-===//
+//===- SchedulingTransform.cpp - Polyhedral Scheduling Transform ----------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
 // This file implements the scheduling transformation framework that applies
 // polyhedral transformations based on target characteristics and

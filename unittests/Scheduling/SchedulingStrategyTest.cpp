@@ -1,3 +1,12 @@
+//===- SchedulingStrategyTest.cpp - Unit Test -----------------------------===//
+//
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
+//
+// This file contains unit tests for the polyhedral scheduling framework.
+//
+//===----------------------------------------------------------------------===//
+
 #include "gtest/gtest.h"
 #include "AutoPoly/Scheduling/SchedulingStrategy.h"
 #include "AutoPoly/Target/TargetInfo.h"

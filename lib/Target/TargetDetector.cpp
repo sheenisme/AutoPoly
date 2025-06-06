@@ -1,6 +1,7 @@
-//===- TargetDetector.cpp - Target Hardware Detection -----*- C++ -*-===//
+//===- TargetDetector.cpp - Target Detection Implementation ---------------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
 // This file implements the target hardware detection and characterization
 // functionality for automatic target-specific optimization in the AutoPoly

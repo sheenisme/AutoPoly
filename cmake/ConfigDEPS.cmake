@@ -1,5 +1,7 @@
 # ============================================================================
 # Common Dependencies Configuration
+# Copyright (c) 2025 AutoPoly Contributors
+# SPDX-License-Identifier: Apache-2.0
 # ============================================================================
 
 # Project compiler settings and options for Debug build

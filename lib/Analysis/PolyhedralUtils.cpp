@@ -1,6 +1,7 @@
-//===- PolyhedralUtils.cpp - Polyhedral Utilities -------------*- C++ -*-===//
+//===- PolyhedralUtils.cpp - Polyhedral Analysis Utilities ----------------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
 // This file implements utility functions for polyhedral analysis and
 // transformation in the AutoPoly framework.

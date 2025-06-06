@@ -1,9 +1,9 @@
-//===- TargetInfo.h - Target Hardware Information ---------*- C++ -*-===//
+//===- TargetInfo.h - Target Information Definition ------------------------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
-// This file defines the target hardware information structures and
-// detection mechanisms for the AutoPoly polyhedral scheduling framework.
+// This file defines target information for the AutoPoly framework.
 //
 //===----------------------------------------------------------------------===//
 

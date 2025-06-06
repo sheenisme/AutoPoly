@@ -1,6 +1,7 @@
-//===- Config.h - AutoPoly Configuration ------------------*- C++ -*-===//
+//===- Config.h - AutoPoly Configuration ----------------------------------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
 // This file defines configuration constants and compilation features
 // for the AutoPoly polyhedral scheduling framework.

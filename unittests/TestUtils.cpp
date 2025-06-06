@@ -1,6 +1,7 @@
-//===- TestUtils.cpp - AutoPoly Unit Test Utilities -----------*- C++ -*-===//
+//===- TestUtils.cpp - AutoPoly Unit Test Utilities -----------------------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
 // This file implements utility classes and functions for AutoPoly unit tests.
 //

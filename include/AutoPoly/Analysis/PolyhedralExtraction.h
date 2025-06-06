@@ -1,6 +1,7 @@
-//===- PolyhedralExtraction.h - MLIR to Polyhedral Model --*- C++ -*-===//
+//===- PolyhedralExtraction.h - MLIR to Polyhedral Model ------------------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
 // This file defines the extraction of polyhedral model information from
 // MLIR affine dialect operations, creating ISL schedule trees for

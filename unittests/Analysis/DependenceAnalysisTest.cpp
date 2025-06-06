@@ -1,3 +1,12 @@
+//===- DependenceAnalysisTest.cpp - Unit Test -----------------------------===//
+//
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
+//
+// This file contains unit tests for the polyhedral dependence analysis framework.
+//
+//===----------------------------------------------------------------------===//
+
 #include "gtest/gtest.h"
 #include "AutoPoly/Analysis/DependenceAnalysis.h"
 #include "TestUtils.h"

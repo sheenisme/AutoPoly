@@ -1,3 +1,12 @@
+//===- SchedulingTransformTest.cpp - Scheduling Transform Test ------------===//
+//
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
+//
+// This file implements the test for the scheduling transform framework.
+//
+//===----------------------------------------------------------------------===//
+
 #include "gtest/gtest.h"
 #include "AutoPoly/Transform/SchedulingTransform.h"
 #include "AutoPoly/Analysis/PolyhedralExtraction.h"

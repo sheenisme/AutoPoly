@@ -1,7 +1,12 @@
-//////////////////////////////////////////////////////////////
-//    This file is the copy of ppcg.c of PPCG Project.      //
-//    Notes: Only rename main() to ppcg_main() and format   // 
-//////////////////////////////////////////////////////////////
+//===- ppcg_wrapper.cpp - PPCG Wrapper Implementation ---------------------===//
+//
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
+//
+// This file is the copy of ppcg.c of PPCG Project.
+// Notes: Only rename main() to ppcg_main() and format
+//
+//===----------------------------------------------------------------------===//
 
 /*
  * Copyright 2011      INRIA Saclay

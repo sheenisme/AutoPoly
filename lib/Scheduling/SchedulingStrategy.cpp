@@ -1,6 +1,7 @@
-//===- SchedulingStrategy.cpp - Scheduling Strategy Framework -*- C++ -*-===//
+//===- SchedulingStrategy.cpp - Polyhedral Scheduling ---------------------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
 // This file implements the scheduling strategy framework that maps target
 // hardware characteristics to appropriate scheduling algorithms and

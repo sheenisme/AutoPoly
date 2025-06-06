@@ -1,6 +1,7 @@
-//===- AffineCodeGeneration.h - Polyhedral to Affine Codegen -*- C++ -*-===//
+//===- AffineCodeGeneration.h - Affine Code Generation --------------------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
 // This file defines code generation from polyhedral schedules back to
 // MLIR affine dialect operations, preserving parallel and optimization

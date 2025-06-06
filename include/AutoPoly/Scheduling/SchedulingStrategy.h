@@ -1,8 +1,9 @@
-//===- SchedulingStrategy.h - Scheduling Strategy Framework -*- C++ -*-===//
+//===- SchedulingStrategy.h - Polyhedral Scheduling Strategy --------------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
-// This file defines the scheduling strategy framework that maps target
+// This file defines the scheduling strategy framework, which maps target
 // hardware characteristics to appropriate scheduling algorithms and
 // optimization parameters.
 //

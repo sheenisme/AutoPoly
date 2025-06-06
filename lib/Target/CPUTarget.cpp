@@ -1,6 +1,7 @@
-//===- CPUTarget.cpp - CPU Target Optimization ---------------*- C++ -*-===//
+//===- CPUTarget.cpp - CPU Target Implementation --------------------------===//
 //
-// Part of the AutoPoly Project
+// Copyright (c) 2025 AutoPoly Contributors
+// SPDX-License-Identifier: Apache-2.0
 //
 // This file implements CPU-specific optimizations and characteristics
 // for the AutoPoly polyhedral scheduling framework.

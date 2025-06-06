@@ -1,3 +1,8 @@
+/* =========================================================================
+ * Copyright (c) 2025 AutoPoly Contributors
+ * SPDX-License-Identifier: Apache-2.0
+ * ========================================================================== */
+
 /* isl_config.h.cmake - Configuration template for ISL */
 
 /* define if your compiler has __attribute__ */

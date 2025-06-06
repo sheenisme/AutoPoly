@@ -1,4 +1,9 @@
-/* pet config.h.  Generated from CMake configuration. */
+/* =========================================================================
+ * Copyright (c) 2025 AutoPoly Contributors
+ * SPDX-License-Identifier: Apache-2.0
+ * ========================================================================== */
+
+/* pet_config.h.cmake - Configuration template for PET */
 
 /* Define if HeaderSearchOptions::AddPath takes 4 arguments */
 #cmakedefine ADDPATH_TAKES_4_ARGUMENTS @ADDPATH_TAKES_4_ARGUMENTS@
