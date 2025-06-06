@@ -21,8 +21,7 @@ add_mlir_library(AutoPolyTransform
   AutoPolyTarget
   AutoPolyScheduling
   AutoPolyAnalysis
-  isl
-  ppcg
+  ${PPCG_LIBRARIES}
 )
 
 target_link_libraries(AutoPolyTransform
@@ -34,13 +33,11 @@ target_link_libraries(AutoPolyTransform
   AutoPolyTarget
   AutoPolyScheduling
   AutoPolyAnalysis
-  isl
-  ppcg
+  ${PPCG_LIBRARIES}
 )
 
 target_include_directories(AutoPolyTransform
   PUBLIC
   ${AUTOPOLY_SOURCE_DIR}/include
-  ${ISL_INCLUDE_DIRS}
   ${PPCG_INCLUDE_DIRS}
 )

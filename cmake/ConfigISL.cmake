@@ -249,5 +249,6 @@ install(TARGETS isl
 )
 install(DIRECTORY ${ISL_DIR}/include/ DESTINATION include/)
 
-# Set ISL include directories
+# Set ISL variables
 set(ISL_INCLUDE_DIRS ${ISL_DIR}/include)
+set(ISL_LIBRARIES isl)

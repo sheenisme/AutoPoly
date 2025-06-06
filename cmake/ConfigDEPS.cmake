@@ -94,6 +94,24 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_SKIP_BUILD_RPATH FALSE)
 
+if(BUILD_TESTS)
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        SOURCE_DIR ${CMAKE_SOURCE_DIR}/third_party/googletest
+    )
+    FetchContent_MakeAvailable(googletest)
+
+    if(TARGET gtest_main AND TARGET gtest)
+        message(STATUS "GoogleTest installed successfully")
+        set(GTEST_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/third_party/googletest/googletest/include)
+        set(GTEST_LIBRARIES gtest_main gtest)
+        message(STATUS "GTest include directories: ${GTEST_INCLUDE_DIRS}")
+        message(STATUS "GTest libraries: ${GTEST_LIBRARIES}")
+    else()
+        message(FATAL_ERROR "GoogleTest not found! Please check the googletest submodule.")
+    endif()
+endif()
 
 # Determine compiler characteristics
 # (These are referenced from Polly project configuration)

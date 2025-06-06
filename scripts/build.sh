@@ -10,7 +10,7 @@ for dep in cmake ninja git; do
 done
 
 # Initialize and update submodules
-if [ ! -d "third_party/ppcg/.git" ] || [ ! -d "third_party/llvm-project/.git" ]; then
+if [ ! -d "third_party/ppcg/.git" ] || [ ! -d "third_party/llvm-project/.git" ] || [ ! -d "third_party/googletest/.git" ]; then
     echo "Initializing git submodules..."
     git submodule update --init --recursive
 else

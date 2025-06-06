@@ -76,48 +76,54 @@ target_compile_options(ppcg PRIVATE
 )
 
 # Build PPCG executable
-add_executable(ppcg_exe ${PPCG_DIR}/ppcg.c)
-set_target_properties(ppcg_exe PROPERTIES OUTPUT_NAME "ppcg")
-target_link_libraries(ppcg_exe PRIVATE ppcg isl pet)
-if(GMP_FOUND)
-    target_link_libraries(ppcg_exe PRIVATE ${GMP_LIBRARIES})
-endif()
-if(MPFR_FOUND)
-    target_link_libraries(ppcg_exe PRIVATE ${MPFR_LIBRARIES})
-endif()
-if(OpenMP_FOUND)
-    target_link_libraries(ppcg_exe PRIVATE ${OpenMP_CXX_LIBRARIES})
-endif()
-if(OpenCL_FOUND)
-    target_link_libraries(ppcg_exe PRIVATE ${OpenCL_LIBRARIES})
+if(BUILD_PPCG_EXE)
+    message(STATUS "Building PPCG executable from source")
+
+    # Add PPCG executable
+    add_executable(ppcg_exe ${PPCG_DIR}/ppcg.c)
+    set_target_properties(ppcg_exe PROPERTIES OUTPUT_NAME "ppcg")
+    target_link_libraries(ppcg_exe PRIVATE ppcg isl pet)
+    if(GMP_FOUND)
+        target_link_libraries(ppcg_exe PRIVATE ${GMP_LIBRARIES})
+    endif()
+    if(MPFR_FOUND)
+        target_link_libraries(ppcg_exe PRIVATE ${MPFR_LIBRARIES})
+    endif()
+    if(OpenMP_FOUND)
+        target_link_libraries(ppcg_exe PRIVATE ${OpenMP_CXX_LIBRARIES})
+    endif()
+    if(OpenCL_FOUND)
+        target_link_libraries(ppcg_exe PRIVATE ${OpenCL_LIBRARIES})
+    endif()
+
+    # Set compile options to the binary of PPCG
+    target_compile_options(ppcg_exe PRIVATE
+        -Wno-sign-compare
+        -Wno-cast-qual
+        -Wno-discarded-qualifiers
+        -Wno-implicit-fallthrough
+        -Wno-unused-function
+        -Wno-unused-variable
+        -Wno-unused-but-set-variable
+        -Wno-type-limits
+        -Wno-return-type
+        -Wno-extra
+    )
+
+    # Set installation rules for PPCG
+    install(TARGETS ppcg ppcg_exe
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+    )
+
+    # Install PPCG headers
+    file(GLOB PPCG_HEADERS "${PPCG_DIR}/*.h") 
+    install(FILES ${PPCG_HEADERS} 
+        DESTINATION include/ppcg
+    )
 endif()
 
-# Set compile options to the binary of PPCG
-target_compile_options(ppcg_exe PRIVATE
-    -Wno-sign-compare
-    -Wno-cast-qual
-    -Wno-discarded-qualifiers
-    -Wno-implicit-fallthrough
-    -Wno-unused-function
-    -Wno-unused-variable
-    -Wno-unused-but-set-variable
-    -Wno-type-limits
-    -Wno-return-type
-    -Wno-extra
-)
-
-# Set installation rules for PPCG
-install(TARGETS ppcg ppcg_exe
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-)
-
-# Install PPCG headers
-file(GLOB PPCG_HEADERS "${PPCG_DIR}/*.h") 
-install(FILES ${PPCG_HEADERS} 
-    DESTINATION include/ppcg
-)
-
-# Set PPCG include directories
-set(PPCG_INCLUDE_DIRS ${PPCG_DIR})
+# Set PPCG variables
+set(PPCG_INCLUDE_DIRS ${PPCG_DIR} ${ISL_INCLUDE_DIRS} ${PET_INCLUDE_DIRS})
+set(PPCG_LIBRARIES ppcg isl pet)

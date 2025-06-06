@@ -1,25 +1,11 @@
 # AutoPoly Unit Tests
-# Add Google Test Framework
-if(NOT TARGET GTest::gtest)
-    include(FetchContent)
-    FetchContent_Declare(
-        googletest
-        SOURCE_DIR ${CMAKE_SOURCE_DIR}/third_party/googletest
-    )
-    FetchContent_MakeAvailable(googletest)
-endif()
-find_package(GTest REQUIRED)
 
 # Include directories
 include_directories(
   ${CMAKE_SOURCE_DIR}/include
   ${CMAKE_SOURCE_DIR}/unittests
   ${GTEST_INCLUDE_DIRS}
-  ${ISL_INCLUDE_DIRS}
-  ${AUTOPOLY_BINARY_DIR}/include
-  ${AUTOPOLY_BINARY_DIR}/include/isl
-  ${AUTOPOLY_BINARY_DIR}/include/pet
-  ${AUTOPOLY_BINARY_DIR}/include/ppcg
+  ${PPCG_INCLUDE_DIRS}
 )
 
 # Link directories
@@ -38,7 +24,7 @@ target_link_libraries(AutoPolyTestUtils
   AutoPolyTarget
   AutoPolyPasses
   ${GTEST_LIBRARIES}
-  ${ISL_LIBRARIES}
+  ${PPCG_LIBRARIES}
   MLIRAffineDialect
   MLIRFuncDialect
   MLIRArithDialect

@@ -14,7 +14,7 @@ add_mlir_library(AutoPolyCodeGen
   AutoPolyTarget
   AutoPolyAnalysis
   AutoPolyTransform
-  isl
+  ${PPCG_LIBRARIES}
 )
 
 target_link_libraries(AutoPolyCodeGen
@@ -26,11 +26,11 @@ target_link_libraries(AutoPolyCodeGen
   AutoPolyTarget
   AutoPolyAnalysis
   AutoPolyTransform
-  isl
+  ${PPCG_LIBRARIES}
 )
 
 target_include_directories(AutoPolyCodeGen
   PUBLIC
   ${AUTOPOLY_SOURCE_DIR}/include
-  ${ISL_INCLUDE_DIRS}
+  ${PPCG_INCLUDE_DIRS}
 )

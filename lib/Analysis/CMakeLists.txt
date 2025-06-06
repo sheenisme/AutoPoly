@@ -14,14 +14,14 @@ add_mlir_library(AutoPolyAnalysis
   MLIRIR
   MLIRMemRefDialect
   AutoPolyTarget
-  isl
+  ${PPCG_LIBRARIES}
 )
 
 target_include_directories(AutoPolyAnalysis
   PUBLIC
   ${AUTOPOLY_SOURCE_DIR}/include
   ${AUTOPOLY_BINARY_DIR}/include
-  ${ISL_INCLUDE_DIRS}
+  ${PPCG_INCLUDE_DIRS}
   ${LLVM_INCLUDE_DIRS}
   ${MLIR_INCLUDE_DIRS}
   ${CLANG_INCLUDE_DIRS}
@@ -36,7 +36,7 @@ target_link_libraries(AutoPolyAnalysis
   MLIRMemRefDialect
   MLIRDialect
   AutoPolyTarget
-  isl
+  ${PPCG_LIBRARIES}
 )
 
 # Install headers

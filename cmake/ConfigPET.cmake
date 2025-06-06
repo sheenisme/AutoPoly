@@ -727,7 +727,7 @@ install(DIRECTORY ${PET_DIR}/include/ DESTINATION include/pet)
 
 # Build PET executable
 if(BUILD_PET_EXE)
-    message(STATUS "Configuring PET executable build from source")
+    message(STATUS "Building PET executable from source")
     # Check libyaml library (required by pet executable)
     find_package(YAML REQUIRED)
     if(YAML_FOUND)
@@ -799,3 +799,7 @@ if(BUILD_PET_EXE)
         RUNTIME DESTINATION bin
     )
 endif()
+
+# Set PET variables
+set(PET_INCLUDE_DIRS ${PET_DIR}/include ${ISL_INCLUDE_DIRS})
+set(PET_LIBRARIES pet isl ${PET_REQUIRED_CLANG_LIBS})

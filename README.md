@@ -1,17 +1,21 @@
 
 
-<h1 align="center">AutoPoly: Automatic Polyhedral Scheduling Framework for MLIR 
-<img src="https://img.shields.io/badge/MLIR-Polyhedral-blue?logo=llvm&logoColor=white" alt="MLIR" height="24"/></h1>
+<h1 align="center">AutoPoly: Automatic Polyhedral Scheduling Framework for MLIR </h1>
 
 <p align="center">
-  <img src="https://img.shields.io/github/license/sheenisme/AutoPoly?style=flat-square" alt="License"/>
-  <img src="https://img.shields.io/github/workflow/status/sheenisme/AutoPoly/CI?label=CI&logo=github" alt="CI"/>
-  <img src="https://img.shields.io/badge/C++-17-blue?logo=c%2B%2B" alt="C++17"/>
-  <img src="https://img.shields.io/badge/LLVM-18%2B-blueviolet?logo=llvm" alt="LLVM"/>
-  <img src="https://img.shields.io/badge/ISL-supported-success?logo=gnu" alt="ISL"/>
+  <img src="https://img.shields.io/badge/C++-17-success?logo=c%2B%2B" alt="C++17"/>
+  <br>
+  <img src="https://img.shields.io/badge/LLVM-18%2B-success?logo=llvm" alt="LLVM"/>
+  <br>
+  <img src="https://img.shields.io/badge/MLIR-Affine-success?logo=llvm&logoColor=white" alt="MLIR" height="24"/>
+  <br>
+  <img src="https://img.shields.io/badge/PPCG-supported-success?logo=gnu" alt="PPCG"/>
+  <br>
 </p>
 
 [🇬🇧 English](README.md) | [🇨🇳 中文](README-zh.md)
+
+> This is just a vision, the program is just getting started, so stay tuned.
 
 ## 🚀 Project Significance
 

@@ -116,7 +116,9 @@ endif()
 option(USE_MPFR   "Disable MPFR  support" OFF)
 option(USE_OPENCL "Disable OpenCL support" OFF)
 option(USE_OPENMP "Enable OpenMP support" ON)
+option(BUILD_TESTS "Build test applications" ON)
 option(BUILD_PET_EXE "Enable Build PET executable" ON)
+option(BUILD_PPCG_EXE "Enable Build PPCG executable" ON)
 
 # Set AutoPoly project directories
 set(AUTOPOLY_SOURCE_DIR ${PROJECT_SOURCE_DIR})
@@ -150,6 +152,15 @@ add_subdirectory(tools)
 enable_testing()
 include(CTest)
 
-# Add tests directory
-add_subdirectory(test)
-add_subdirectory(unittests)
+# Test options
+if(BUILD_TESTS)
+    # Enable testing
+    enable_testing()
+
+    # Include CTest
+    include(CTest)
+
+    # Include test directories
+    add_subdirectory(test)
+    add_subdirectory(unittests)
+endif()
